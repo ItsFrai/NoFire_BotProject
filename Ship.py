@@ -69,29 +69,52 @@ class Ship():
                         self.ship[leak_x][leak_y] = self.colored_block('g')
                         self.leak = (leak_x, leak_y)
                         break
+    def sense_action(self):  
+        if any(cell == self.leak for cell in self.get_detection_square()):
+            print("Leak detected in the detection square or the current square.")
+            return True
+        else:
+            print("No leak detected in the detection square or the current square.")
+            return False
+        
+    def get_detection_square(self):
+        detection_square = []
+        k_val = int(self.k_val) 
+        for x in range(self.bot[0] - k_val, self.bot[0] + k_val + 1):
+            for y in range(self.bot[1] - k_val, self.bot[1] + k_val + 1):
+                if 0 <= x < self.D and 0 <= y < self.D:
+                    detection_square.append((x, y))
+        return detection_square
 
-    def run_bot_1(self, k_val):
+
+
+    def run_bot_1(self):
+        detection_square = self.get_detection_square()
+        leak_detected = self.sense_action()
+        
+        print(detection_square)
+        print(leak_detected)
+
+            
+    def run_bot_2(self, k_val):
         pass
 
-    def run_bot_2(self, k_valability):
+    def run_bot_3(self, k_val):
         pass
 
-    def run_bot_3(self, k_valability):
-        pass
-
-    def run_bot_5(self, k_valability):
+    def run_bot_5(self, k_val):
         pass
     
-    def run_bot_6(self, k_valability):
+    def run_bot_6(self, k_val):
         pass
     
-    def run_bot_7(self, k_valability):
+    def run_bot_7(self, k_val):
         pass
     
-    def run_bot_8(self, k_valability):
+    def run_bot_8(self, k_val):
         pass
     
-    def run_bot_9(self, k_valability):
+    def run_bot_9(self, k_val):
         pass
 
 if __name__ == "__main__":
@@ -104,7 +127,7 @@ if __name__ == "__main__":
     ans = int(input("Which bot do you want to run?\n1.Bot 1\n2.Bot 2\n3.Bot 3\n4.Bot 4\nBot: "))
 
     if ans == 1:
-        ship.run_bot_1(k_val)
+        ship.run_bot_1()
     elif ans == 2:
         ship.run_bot_2(k_val)
     elif ans == 3:
