@@ -71,15 +71,12 @@ class Ship():
                         break
     def sense_action(self):  
         if any(cell == self.leak for cell in self.get_detection_square()):
-            print("Leak detected in the detection square or the current square.")
             return True
         else:
-            print("No leak detected in the detection square or the current square.")
             return False
         
     def get_detection_square(self):
         detection_square = []
-        k_val = int(self.k_val) 
         for x in range(self.bot[0] - k_val, self.bot[0] + k_val + 1):
             for y in range(self.bot[1] - k_val, self.bot[1] + k_val + 1):
                 if 0 <= x < self.D and 0 <= y < self.D:
@@ -87,13 +84,54 @@ class Ship():
         return detection_square
 
 
-
     def run_bot_1(self):
-        detection_square = self.get_detection_square()
-        leak_detected = self.sense_action()
-        
-        print(detection_square)
-        print(leak_detected)
+        # Initialize a set to keep track of visited locations
+        visited = set()
+
+        while self.bot != self.leak:
+            if self.sense_action():
+                print("Leak found")
+                # Leak is in the detection square, search for it
+                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
+                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D:
+                            print(f"Moving to location ({x}, {y})")
+                            visited.add((x, y))
+                            self.bot = (x, y)
+                        
+                            if self.bot == self.leak:
+                                print("Congratulations, you found the leak!")
+                                return
+
+            else:
+                print("Leak not found")
+                # Leak is not in the detection square, move the bot
+                possible_moves = [(self.bot[0] + dx, self.bot[1] + dy) for dx, dy in self.directions]
+                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D]
+                unvisited_moves = [move for move in valid_moves if move not in visited]
+                
+                if unvisited_moves:
+                    # Choose an unvisited location to move to
+                    new_location = random.choice(unvisited_moves)
+                    print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    visited.add(new_location)
+                    self.bot = new_location
+                                        
+                else:
+                    # All neighboring cells are visited; backtrack to a previous location
+                    self.bot = visited.pop()
+                    print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
+            print(self)
+                
+
+        print("Congratulations, you found the leak!")
+
+    
+        #while self.leak != self.bot
+            #do a sense check and see if it is in the square
+                # if it is, then iterate through all the -'s within the bot and once you find the leak print you won and break
+            #if it is not in the square after sensing, move the bot to any other location that wasn't visited in the grid based on its location, 
+            # meaning up 1 down 1 left 1 or right 1. from here, go back up and do the while loop again, and then use the sense again until you find the leak
 
             
     def run_bot_2(self, k_val):
@@ -119,7 +157,7 @@ class Ship():
 
 if __name__ == "__main__":
     ship = Ship()
-    k_val= float(input("Enter k value: "))
+    k_val= int(input("Enter k value: "))
     ship.k_val = k_val
     ship.generate_ship()
     print(ship)
