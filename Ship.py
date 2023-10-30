@@ -19,9 +19,20 @@ class Ship():
 
     def __repr__(self):
         ship_str = ""
-        for row in self.ship:
-            ship_str += '[' + ' '.join(row) + ']\n'
+        for x in range(self.D):
+            for y in range(self.D):
+                cell = self.ship[x][y]
+                if (x >= self.bot[0] - self.k_val) and (x <= self.bot[0] + self.k_val) and \
+                (y >= self.bot[1] - self.k_val) and (y <= self.bot[1] + self.k_val):
+                    if (x, y) != self.bot:
+                        ship_str += '[' + "-" + ']'
+                    else:
+                        ship_str += '[' + cell + ']'
+                else:
+                    ship_str += '[' + cell + ']'
+            ship_str += '\n'
         return ship_str
+
 
     def colored_block(self, color):
         color_codes = {
