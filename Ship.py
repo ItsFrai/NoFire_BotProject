@@ -87,6 +87,24 @@ class Ship():
                     detection_square.append((x, y))
         return detection_square
 
+    def find_closest_square(self):
+        closest_square = None
+        closest_distance = float('inf')
+
+        for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
+            for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                if (x, y) != self.bot and 0 <= x < self.D and 0 <= y < self.D:
+                    dx = self.leak[0] - x
+                    dy = self.leak[1] - y
+                    distance = abs(dx) + abs(dy)
+
+                    if distance < closest_distance:
+                        closest_square = (x, y)
+                        closest_distance = distance
+
+        return closest_square
+
+
 
     def run_bot_1(self):
         # Initialize a set to keep track of visited locations
@@ -155,47 +173,48 @@ class Ship():
 
         while self.bot != self.leak:
             # Sense only if it's been a while since the last sense or move
-            if self.actions_counter % 5 == 0:
-                if self.sense_action():
-                    for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
-                        for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
-                            if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D:
-                                print(f"Moving to location ({x}, {y})")
-                                visited.add((x, y))
-                                self.ship[self.bot[0]][self.bot[1]] = 'O'
-                                self.bot = (x, y)
-                                self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')  
+            if self.sense_action():
+                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
+                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D:
+                            print(f"Moving to location ({x}, {y})")
+                            visited.add((x, y))
+                            self.ship[self.bot[0]][self.bot[1]] = 'O'
+                            self.bot = (x, y)
+                            self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')  
 
-                            
-                                if self.bot == self.leak:
-                                    print("Congratulations, you found the leak!")
-                                    print(f"Total amount of actions = {ship.actions_counter}")  
-                                    return
+                        
+                            if self.bot == self.leak:
+                                print("Congratulations, you found the leak!")
+                                print(f"Total amount of actions = {ship.actions_counter}")  
+                                return
 
             # Calculate the direction towards the leak
-            dx = self.leak[0] - self.bot[0]
-            dy = self.leak[1] - self.bot[1]
-
-            # Try to move closer to the leak
-            if abs(dx) > abs(dy):
-                new_location = (self.bot[0] + (1 if dx > 0 else -1), self.bot[1])
             else:
-                new_location = (self.bot[0], self.bot[1] + (1 if dy > 0 else -1))
+                x,y = self.find_closest_square()
+                dx = self.leak[0] - x
+                dy = self.leak[1] - y
 
-            # Ensure the new location is within the grid
-            if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D:
-                print(f"Moving to location ({new_location[0]}, {new_location[1]})")
-                visited.add(self.bot)
-                self.ship[self.bot[0]][self.bot[1]] = 'O'
-                self.bot = new_location
-                self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-            else:
-                # If moving in the calculated direction is not possible, backtrack to a visited cell
-                self.ship[self.bot[0]][self.bot[1]] = 'O'
-                self.bot = visited.pop()
-                self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
-            self.actions_counter += 1
+                # Try to move closer to the leak
+                if abs(dx) > abs(dy):
+                    new_location = (self.bot[0] + (1 if dx > 0 else -1), self.bot[1])
+                else:
+                    new_location = (self.bot[0], self.bot[1] + (1 if dy > 0 else -1))
+
+                # Ensure the new location is within the grid
+                if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D:
+                    print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    visited.add(self.bot)
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = new_location
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                else:
+                    # If moving in the calculated direction is not possible, backtrack to a visited cell
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = visited.pop()
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
+                    self.actions_counter += 1
             print(self)
             
             
