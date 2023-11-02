@@ -197,9 +197,33 @@ class Ship():
                 print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
             self.actions_counter += 1
             print(self)
+            
+            
+        #sense_action (for probabilistic determination)
+        #compute the probability of receiving a beep
+            #based on that probability, re-initilize the probability matrix to take the new beep/no-beep probability
+                #this is based on P(leak in matrix [x][y](the specific position in the interation for loop) | beep in current position) 
+                # or P(leak in matrix [x][y] | NO beep in current position)
+                # this might be trick because you have to find the shortest path (make another helper method for this, you can use the bfs algo from the last project but modified)
+                # from the bot to the leak in order to get the D value for the probability (save this value as it might be used later)
 
 
     def run_bot_3(self, k_val):
+        #create a probability matrix the same size of the ship
+        #set the bot's initial position's probability to 0
+        #initilize the matrix to be (1 / open spots on the ship) for all of the open places but the location of the bot
+        
+        
+        #now the run_bot_3 itself is pretty simple:
+        #while (bot's position != leaks position)
+        
+            #start by performing a sense action (THIS SHOULD BE A HELPER FUNCTION)
+                
+            #for each (open) direction that the bot can move, organize their probabilities in descending order
+                #select the one that has the highest probability of containing the leak for the new position of the Bot
+            
+
+        
         pass
 
     def run_bot_5(self, k_val):
