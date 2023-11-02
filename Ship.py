@@ -212,15 +212,25 @@ class Ship():
         #create a probability matrix the same size of the ship
         #set the bot's initial position's probability to 0
         #initilize the matrix to be (1 / open spots on the ship) for all of the open places but the location of the bot
+        #create a counter for the sense action and the move action
         
         
         #now the run_bot_3 itself is pretty simple:
         #while (bot's position != leaks position)
+
+            #set the current position probability to 0
         
             #start by performing a sense action (THIS SHOULD BE A HELPER FUNCTION)
+            #sense++
                 
             #for each (open) direction that the bot can move, organize their probabilities in descending order
                 #select the one that has the highest probability of containing the leak for the new position of the Bot
+                #move++
+                
+        #theres an edge case where you might get stuck at a dead end with probabilities of 0 all around you, if this happens, then run the shortest path from your current
+        #position to the highest probability position adjacent to the 0s 
+        # this should give you a path with X amounts of Steps
+        # move += X; 
             
 
         
