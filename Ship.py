@@ -1,3 +1,4 @@
+
 import random
 import math
 import time
@@ -203,7 +204,7 @@ class Ship():
 
         for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
             for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
-                if (x, y) != self.bot and 0 <= x < self.D and 0 <= y < self.D:
+                if (x, y) != self.bot and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                     dx = self.leak[0] - x
                     dy = self.leak[1] - y
                     distance = abs(dx) + abs(dy)
@@ -223,7 +224,7 @@ class Ship():
                 # Leak is in the detection square, search for it
                 for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
                     for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
-                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D:
+                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D  and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
                             visited.add((x, y))
                             self.ship[self.bot[0]][self.bot[1]] = 'O'
@@ -239,7 +240,7 @@ class Ship():
                 print("Leak not found")
                 # Leak is not in the detection square, move the bot
                 possible_moves = [(self.bot[0] + dx, self.bot[1] + dy) for dx, dy in self.directions]
-                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D]
+                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X']
                 unvisited_moves = [move for move in valid_moves if move not in visited]
 
                 if unvisited_moves:
@@ -261,6 +262,7 @@ class Ship():
                     print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
                     self.actions_counter += 1
             print(self)
+            
        
 
     
@@ -280,7 +282,7 @@ class Ship():
             if self.sense_action():
                 for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
                     for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
-                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D:
+                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
                             visited.add((x, y))
                             self.ship[self.bot[0]][self.bot[1]] = 'O'
