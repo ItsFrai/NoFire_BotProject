@@ -1,5 +1,6 @@
 import random
 import math
+import time
 
 class Ship():
     def __init__(self):
@@ -146,40 +147,37 @@ class Ship():
 
         # Finds the shortest path from the start coordinate to the goal coordinate, considering constraints.
         # Returns the length of the shortest path or -1 if no path is found.
-    def find_shortest_path(self, start: tuple, goal: tuple, constraints: list = []) -> int:
+    def find_shortest_path(self, start: tuple, end: tuple, constraints: list = []) -> list:  
         fringe = dict()
-        fringe.update({start: math.dist([start[0], start[1]], [goal[0], goal[1]])})
+        fringe.update({start: math.dist([start[0], start[1]], [end[0], end[1]])})
         parent = {}
         visited = []
 
-        sorted_list = [start]
+        sorted_list = [(start[0], start[1])]
         while fringe:
             smallest_key = sorted_list.pop(0)
             curr_x, curr_y = smallest_key
             fringe.pop(smallest_key)
 
-            # If the goal is found
-            if smallest_key == goal:
-                # Calculate the length of the path
-                length = 0
-                while smallest_key in parent:
-                    length += 1
+            # If button is found
+            if curr_x == end[0] and curr_y == end[1]:
+                path = [(curr_x, curr_y)]
+                while smallest_key in parent and smallest_key != start:
+                    path.insert(0, smallest_key)
                     smallest_key = parent[smallest_key]
-                return length
-
+                return path
+            
             for x, y in self.directions:
                 new_x, new_y = x + curr_x, y + curr_y
-                # Check if the neighbor is a valid one
+                # all of the neighbours inside this if statement are valid neighbours.
                 if 0 <= new_x < self.D and 0 <= new_y < self.D and self.ship[new_x][new_y] != 'X' and (new_x, new_y) not in constraints and (new_x, new_y) not in visited:
-                    edist = math.dist([new_x, new_y], [goal[0], goal[1]])
+                    edist = math.dist([new_x, new_y], [end[0], end[1]])
                     fringe.update({(new_x, new_y): edist})
-                    visited.append((new_x, new_y))
+                    visited.append((new_x,new_y))
                     parent[(new_x, new_y)] = smallest_key
 
             sorted_list = [k for k, _ in sorted(fringe.items(), key=lambda item: item[1])]
-
-        # No path found
-        return -1
+        return None
 
     # Senses if the button is within the radius of the bot
     def sense_action(self):
@@ -272,7 +270,7 @@ class Ship():
             #if it is not in the square after sensing, move the bot to any other location that wasn't visited in the grid based on its location, 
             # meaning up 1 down 1 left 1 or right 1. from here, go back up and do the while loop again, and then use the sense again until you find the leak
 
-            
+
     def run_bot_2(self):
         # Initialize a set to keep track of visited locations
         visited = set()
@@ -343,41 +341,47 @@ class Ship():
         bot_x, bot_y = self.bot
         leak_prob[bot_x][bot_y] = 0
         
-        dist_matrix = [-1 * self.D for _ in range(self.D)]
-        
-        # first compute each location's distance, if no path/
+        dist_matrix = [[-1 * self.D for _ in range(self.D)] for _ in range(self.D)]
+
+        # first compute each location's distance to the leak, if no path/is a X, return -1
         for i in range(self.D):
             for j in range(self.D):
                 if self.ship[i][j] != 'X':
                     start = (i, j)
-                    steps_to_leak = self.find_shortest_path(start=start, goal=self.leak)
-                    dist_matrix[i][j] = steps_to_leak
-
+                    steps_to_leak = self.find_shortest_path(start=start, end=self.leak)
+                    # print(len(steps_to_leak))
+                    dist_matrix[i][j] = (len(steps_to_leak) - 1)
+                    print(dist_matrix[i][j])
+            print()
 
         while self.bot != self.leak:
-        # the higher the alpha, the lower the beep prob
+            bot_x, bot_y = self.bot
+            # get the distance of the bot to the leak
+            bot_leak_steps = dist_matrix[bot_x][bot_y]
 
-            bot_leak_steps = self.find_shortest_path(self.bot, self.leak)
             beep_prob = math.exp(-alpha * (bot_leak_steps -1))
             random_val = random.random()
             # if there is a beep
             if beep_prob > random_val:
-                # go through each of the matrix prob and update it with changing factor of distance
+                # update each of the open cell possibilities via:
                 # p_leak[x][y] = p_beep[x][y] * p_leak[x][y]/ p_beep |[bot.x][bot.y]
                 # prob of leak = that matrix prob * curr prob of leak at that location / prob of leak at bot location
-                
+                for i in range(self.D):
+                    for j in range(self.D):
+                        if self.ship[i][j] != 'X':
+                            step_dist = steps_to_leak[i][j]
+                            leak_prob[i][j] = leak_prob[i][j] * math.exp(-alpha * (step_dist - 1)) / beep_prob
+                            
                 self.actions_counter += 1
-                # Leak is in the detection square, search for it
-                pass
             else:
-                pass
-        #now the run_bot_3 itself is pretty simple:
-        #while (bot's position != leaks position)
-
-            #set the current position probability to 0
-        
-            #start by performing a sense action (THIS SHOULD BE A HELPER FUNCTION)
-            #sense++
+               for i in range(self.D):
+                    for j in range(self.D):
+                        if self.ship[i][j] != 'X':
+                            step_dist = steps_to_leak[i][j]
+                            #todo: THIS FORMULA BELOW IS WRONG CHANGE IT AFTER
+                            leak_prob[i][j] = leak_prob[i][j] * math.exp(-alpha * (step_dist - 1)) / beep_prob
+            
+            
 
             #for each (open) direction that the bot can move, organize their probabilities in descending order
                 #select the one that has the highest probability of containing the leak for the new position of the Bot
@@ -419,7 +423,8 @@ if __name__ == "__main__":
     elif ans == 2:
         ship.run_bot_2()
     elif ans == 3:
-        ship.run_bot_3(k_val)
+        alpha = int(input("What is your aplha value?\n"))
+        ship.run_bot_3(alpha)
     elif ans == 4:
         ship.run_bot_4(k_val)
     elif ans == 5:
