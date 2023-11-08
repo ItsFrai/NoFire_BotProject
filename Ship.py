@@ -371,8 +371,68 @@ class Ship():
         
         pass
 
-    def run_bot_5(self, k_val):
-        pass
+    def run_bot_5(self): 
+        
+        while True:
+            new_x = random.randint(0, self.D - 1)
+            new_y = random.randint(0, self.D - 1)
+            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X':
+                break
+
+        # Add the second leak to the ship grid
+        self.ship[new_x][new_y] = self.colored_block('g')
+
+    
+        visited = set()
+        leaks_found = 0  # To keep track of the number of leaks found
+
+        while leaks_found < 2:
+            if self.sense_action():
+                print("Leak found")
+                # Leak is in the detection square, search for it
+                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
+                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
+                            print(f"Moving to location ({x}, {y})")
+                            visited.add((x, y))
+                            self.ship[self.bot[0]][self.bot[1]] = 'O'
+                            self.bot = (x, y)
+                            self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+
+                            if self.bot == self.leak:
+                                
+                                print(f"Congratulations, you found leak {leaks_found + 1}!")
+                                leaks_found += 1
+                                if leaks_found == 2:
+                                    print("Both leaks found.")
+                                    print(f"Total amount of actions = {self.actions_counter}")
+                                    return
+            else:
+                print("Leak not found")
+                # Leak is not in the detection square, move the bot
+                possible_moves = [(self.bot[0] + dx, self.bot[1] + dy) for dx, dy in self.directions]
+                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X']
+                unvisited_moves = [move for move in valid_moves if move not in visited]
+
+                if unvisited_moves:
+                    # Choose an unvisited location to move to
+                    new_location = random.choice(unvisited_moves)
+                    print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    visited.add(new_location)
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = new_location
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    self.actions_counter += 1
+
+                else:
+                    # All neighboring cells are visited; backtrack to a previous location
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = visited.pop()
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
+                    self.actions_counter += 1
+            print(self)
+
     
     def run_bot_6(self, k_val):
         pass
@@ -403,16 +463,16 @@ if __name__ == "__main__":
         alpha = int(input("What is your aplha value?\n"))
         ship.run_bot_3(alpha)
     elif ans == 4:
-        ship.run_bot_4(k_val)
+        ship.run_bot_4()
     elif ans == 5:
-        ship.run_bot_5(k_val)
+        ship.run_bot_5()
     elif ans == 6:
-        ship.run_bot_6(k_val)
+        ship.run_bot_6()
     elif ans == 7:
-        ship.run_bot_7(k_val)
+        ship.run_bot_7()
     elif ans == 8:
-        ship.run_bot_8(k_val)
+        ship.run_bot_8()
     elif ans == 9:
-        ship.run_bot_9(k_val)
+        ship.run_bot_9()
     else:
         print("Invalid bot choice.")
