@@ -196,24 +196,7 @@ class Ship():
                 if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                     detection_square.append((x, y))
         return detection_square
-
-    # Obtains the closest square to the leak
-    def find_closest_square(self):
-        closest_square = None
-        closest_distance = float('inf')
-
-        for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
-            for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
-                if (x, y) != self.bot and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
-                    dx = self.leak[0] - x
-                    dy = self.leak[1] - y
-                    distance = abs(dx) + abs(dy)
-
-                    if distance < closest_distance:
-                        closest_square = (x, y)
-                        closest_distance = distance
-        return closest_square
-
+    
     def run_bot_1(self):
         # Initialize a set to keep track of visited locations
         visited = set()
@@ -293,33 +276,25 @@ class Ship():
                                 print("Congratulations, you found the leak!")
                                 print(f"Total amount of actions = {ship.actions_counter}")  
                                 return
-
             # Calculate the direction towards the leak
             else:
-                x,y = self.find_closest_square()
-                dx = self.leak[0] - x
-                dy = self.leak[1] - y
+                detection_square = self.get_detection_square()
+                constraints = visited | {(x, y) for x in range(self.D) for y in range(self.D) if self.ship[x][y] == 'X'}
+                shortest_path = None
+                for location in detection_square:
+                    path = self.find_shortest_path(start =location, end = self.leak)
+                    if path and (shortest_path is None or len(path) < len(shortest_path)):
+                        shortest_path = path
 
-                # Try to move closer to the leak
-                if abs(dx) > abs(dy):
-                    new_location = (self.bot[0] + (1 if dx > 0 else -1), self.bot[1])
-                else:
-                    new_location = (self.bot[0], self.bot[1] + (1 if dy > 0 else -1))
-
-                # Ensure the new location is within the grid
-                if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D:
-                    print(f"Moving to location ({new_location[0]}, {new_location[1]})")
-                    visited.add(self.bot)
-                    self.ship[self.bot[0]][self.bot[1]] = 'O'
-                    self.bot = new_location
-                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                else:
-                    # If moving in the calculated direction is not possible, backtrack to a visited cell
-                    self.ship[self.bot[0]][self.bot[1]] = 'O'
-                    self.bot = visited.pop()
-                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                    print(f"Back tracking to location ({self.bot[0]}, {self.bot[1]})")
-                    self.actions_counter += 1
+                # Move to the next location on the shortest path
+                new_location = shortest_path[0]
+                print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                visited.add(self.bot)
+                self.ship[self.bot[0]][self.bot[1]] = 'O'
+                self.bot = new_location
+                self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                self.actions_counter += 1
+               
             print(self)
             
             
