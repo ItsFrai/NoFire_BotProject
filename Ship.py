@@ -21,7 +21,7 @@ class Ship():
         self.leak = (-1, -1)
         self.k_val = 0
         self.actions_counter = 0
-        self.open_cells = 0
+        self.open_cells_list = [()]
         self.second_leak = None
         
     def __repr__(self):
@@ -109,8 +109,6 @@ class Ship():
                 for y in range(self.D):
                     if self.ship[x][y] == '-':
                         self.ship[x][y] = 'X' 
-                    if self.ship[x][y] == 'O':
-                        self.open_cells += 1
 
             while self.bot == (-1, -1) or self.leak == (-1, -1):
                 rand_x_coord = random.randint(0, self.D - 1)
@@ -120,6 +118,8 @@ class Ship():
                     self.ship[rand_x_coord][rand_y_coord] = self.colored_block('c')
                     self.bot = (rand_x_coord, rand_y_coord)
                 elif self.leak == (-1, -1):
+
+
                     # Ensure the leak is at least k_val + 1 cells away from the square
                     while True:
                         leak_x = random.randint(0, self.D - 1)
@@ -128,6 +128,10 @@ class Ship():
                             self.ship[leak_x][leak_y] = self.colored_block('g')
                             self.leak = (leak_x, leak_y)
                             break
+        for x in range(self.D):
+            for y in range(self.D):
+                if self.ship[x][y] == 'O' or (x,y) == self.leak:
+                    self.open_cells_list.append((x,y))
 
     def colored_block(self, color):
         color_codes = {
@@ -186,11 +190,11 @@ class Ship():
         self.actions_counter += 1
         if any(cell == self.leak for cell in self.get_detection_square()):
             return True
-            
+
         else:
             return False
     def sense_action_for_two(self):
-        
+
         self.actions_counter += 1
         detection_square = self.get_detection_square()
         leaks_detected = [cell for cell in detection_square if cell == self.leak or cell == self.second_leak]
@@ -208,6 +212,25 @@ class Ship():
                 if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                     detection_square.append((x, y))
         return detection_square
+    
+    def update_mat_enter(self, prob_mat) -> list[list[float]]:
+        temp_mat = prob_mat
+        sum_prob = 0
+        for x in range(self.D):
+            for y in range(self.D):
+                sum_prob += prob_mat[x][y]
+        
+        print(sum_prob)
+
+        for x in range(self.D):
+            for y in range(self.D):
+                prob_mat[x][y] = prob_mat[x][y] / sum_prob
+        
+        return prob_mat
+
+    
+            
+
     
     def run_bot_1(self):
         # Initialize a set to keep track of visited locations
@@ -327,6 +350,7 @@ class Ship():
         
         # leak probability matrix
         leak_prob = [[1/ self.open_cells] * self.D for _ in range(self.D)]
+        
         bot_x, bot_y = self.bot
         leak_prob[bot_x][bot_y] = 0
         
@@ -412,10 +436,15 @@ class Ship():
                             self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
 
                             if self.bot == self.leak:
+
                                 self.ship[self.leak[0]][self.leak[1]] = 'O'
                                 self.leak = None
                                 print(f"Congratulations, you found leak {leaks_found + 1}!")
                                 leaks_found += 1
+                                if leaks_found == 2:
+                                    print("Both leaks found.")
+                                    print(f"Total amount of actions = {self.actions_counter}")
+                                    return
                             elif self.bot == self.second_leak:
                                 print("second leak found")
                                 self.ship[self.second_leak[0]][self.second_leak[1]] = 'O'
@@ -446,14 +475,34 @@ class Ship():
                     print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
                     self.actions_counter += 1
             print(self)
-            time.sleep(.5)
+            time.sleep(0.5)
 
     
     def run_bot_6(self, k_val):
         pass
     
-    def run_bot_7(self, k_val):
-        pass
+    def run_bot_7(self, a_val):
+        leak_prob = [[1/ (len(self.open_cells_list) - 1)] * self.D for _ in range(self.D)]
+        for i in range(self.D):
+            for j in range(self.D):
+                if (i,j) not in self.open_cells_list:
+                    leak_prob[i][j] = 0
+
+        bot_x, bot_y = self.bot
+        leak_prob[bot_x + 1][bot_y] = 0
+        total_actions = 0
+
+        dist_to_leak = self.find_shortest_path(self.bot, self.leak)
+        prob_beep = math.exp(-1 * a_val * (dist_to_leak - 1))
+        
+        # while self.bot != self.leak:
+        #     leak_prob[bot_x, bot_y] = 0
+        #     leak_prob = self.update_mat_enter(leak_prob)
+        #     #sense action
+        #     dist_to_leak = self.find_shortest_path(self.bot, self.leak)
+        #     prob_beep = math.exp(-1 * a_val * (dist_to_leak - 1))
+
+
     
     def run_bot_8(self, k_val):
         pass
@@ -468,7 +517,7 @@ if __name__ == "__main__":
     ship.generate_ship()
     print(ship)
 
-    ans = int(input("Which bot do you want to run?\n1.Bot 1\n2.Bot 2\n3.Bot 3\n4.Bot 4\nBot: "))
+    ans = int(input("Which bot do you want to run?\n1.Bot 1\n2.Bot 2\n3.Bot 3\n4.Bot 4\n5.Bot 5\n6.Bot 6\n7.Bot 7\n8.Bot 8\n9.Bot: 9\n"))
 
     if ans == 1:
         ship.run_bot_1()
