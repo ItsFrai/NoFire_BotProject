@@ -274,11 +274,13 @@ class Ship():
                                         
                 else:
                     # All neighboring cells are visited; backtrack to a previous location
+                    prev_location = self.bot
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = visited.pop()
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                     print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
-                    self.actions_counter += 1
+                    distance_traveled = int(math.sqrt((self.bot[0] - prev_location[0])**2 + (self.bot[1] - prev_location[1])**2))
+                    self.actions_counter += distance_traveled
             print(self)
             
        
@@ -329,6 +331,9 @@ class Ship():
                 self.bot = new_location
                 self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                 self.actions_counter += 1
+                if (self.bot == self.leak):
+                    print("Congrats you found the leak!")
+                    return
                
             print(self)
             
@@ -434,18 +439,23 @@ class Ship():
                             self.ship[self.bot[0]][self.bot[1]] = 'O'
                             self.bot = (x, y)
                             self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-
+                            
+                            if leaks_found == 2:
+                                print("You won")
+                                print(self.actions_counter)
+                                return
+                            
                             if self.bot == self.leak:
-
                                 self.ship[self.leak[0]][self.leak[1]] = 'O'
                                 self.leak = None
-                                print(f"Congratulations, you found leak {leaks_found + 1}!")
+                                print("first leak found")
                                 leaks_found += 1
                             elif self.bot == self.second_leak:
                                 print("second leak found")
                                 self.ship[self.second_leak[0]][self.second_leak[1]] = 'O'
                                 self.second_leak = None
                                 leaks_found += 1
+                                
             else:
                 print("Leak not found")
                 # Leak is not in the detection square, move the bot
@@ -465,13 +475,14 @@ class Ship():
 
                 else:
                     # All neighboring cells are visited; backtrack to a previous location
+                    prev_location = self.bot
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = visited.pop()
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                     print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
-                    self.actions_counter += 1
+                    distance_traveled = int(math.sqrt((self.bot[0] - prev_location[0])**2 + (self.bot[1] - prev_location[1])**2))
+                    self.actions_counter += distance_traveled
             print(self)
-            time.sleep(0.5)
 
     
     def run_bot_6(self, k_val):
