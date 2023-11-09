@@ -441,10 +441,6 @@ class Ship():
                                 self.leak = None
                                 print(f"Congratulations, you found leak {leaks_found + 1}!")
                                 leaks_found += 1
-                                if leaks_found == 2:
-                                    print("Both leaks found.")
-                                    print(f"Total amount of actions = {self.actions_counter}")
-                                    return
                             elif self.bot == self.second_leak:
                                 print("second leak found")
                                 self.ship[self.second_leak[0]][self.second_leak[1]] = 'O'
