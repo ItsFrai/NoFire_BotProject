@@ -22,6 +22,7 @@ class Ship():
         self.k_val = 0
         self.actions_counter = 0
         self.open_cells = 0
+        self.second_leak = None
         
     def __repr__(self):
         ship_str = ""
@@ -185,8 +186,19 @@ class Ship():
         self.actions_counter += 1
         if any(cell == self.leak for cell in self.get_detection_square()):
             return True
+            
         else:
             return False
+    def sense_action_for_two(self):
+        
+        self.actions_counter += 1
+        detection_square = self.get_detection_square()
+        leaks_detected = [cell for cell in detection_square if cell == self.leak or cell == self.second_leak]
+        if leaks_detected:  
+            return True
+        else:
+            return False
+
 
     # Obtains the radius of the bot within ship bounds
     def get_detection_square(self):
@@ -381,13 +393,13 @@ class Ship():
 
         # Add the second leak to the ship grid
         self.ship[new_x][new_y] = self.colored_block('g')
+        self.second_leak = (new_x, new_y)
 
-    
         visited = set()
         leaks_found = 0  # To keep track of the number of leaks found
 
         while leaks_found < 2:
-            if self.sense_action():
+            if self.sense_action_for_two():
                 print("Leak found")
                 # Leak is in the detection square, search for it
                 for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
@@ -400,13 +412,15 @@ class Ship():
                             self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
 
                             if self.bot == self.leak:
-                                
+                                self.ship[self.leak[0]][self.leak[1]] = 'O'
+                                self.leak = None
                                 print(f"Congratulations, you found leak {leaks_found + 1}!")
                                 leaks_found += 1
-                                if leaks_found == 2:
-                                    print("Both leaks found.")
-                                    print(f"Total amount of actions = {self.actions_counter}")
-                                    return
+                            elif self.bot == self.second_leak:
+                                print("second leak found")
+                                self.ship[self.second_leak[0]][self.second_leak[1]] = 'O'
+                                self.second_leak = None
+                                leaks_found += 1
             else:
                 print("Leak not found")
                 # Leak is not in the detection square, move the bot
@@ -432,6 +446,7 @@ class Ship():
                     print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
                     self.actions_counter += 1
             print(self)
+            time.sleep(.5)
 
     
     def run_bot_6(self, k_val):
