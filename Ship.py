@@ -670,7 +670,6 @@ class Ship():
             print(beep)
             time.sleep(100000)
 
-
     
     def run_bot_8(self, k_val):
         pass
