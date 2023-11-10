@@ -234,6 +234,31 @@ class Ship():
                 prob_mat[x][y] = prob_mat[x][y] / sum_prob
         
         return prob_mat
+    
+    def update_mat_beep(self, prob_mat, a_val) -> list[list[float]]:
+        temp_mat = [[0.0 for _ in range(self.D)] for _ in range(self.D)]
+        dist_mat = [[0 for _ in range(self.D)] for _ in range(self.D)]
+        for x in range(self.D):
+            for y in range(self.D):
+                if (x,y) in self.open_cells_list:
+                    dist_mat[x][y] = len(self.find_shortest_path((x,y), self.bot)) - 1
+                print(dist_mat[x][y])
+            print("\n")
+            
+        print("beep Probability now\n")
+        for x in range(self.D):
+            for y in range(self.D):
+                pow = math.exp( -a_val * (dist_mat[x][y]) - 1)
+                if (x,y) in self.open_cells_list:
+                    temp_mat[x][y] = math.exp( -a_val * (dist_mat[x][y] - 1))
+                print(dist_mat[x][y])
+                print(pow)
+            print("\n")
+            print("\n")
+        # for x in range(self.D):
+        #     for y in range(self.D):
+        #         temp_mat[x][y] = temp_mat[x][y] * 
+        #     print("\n")
 
 
     def run_bot_1(self):
@@ -544,7 +569,7 @@ class Ship():
                     self.actions_counter += distance_traveled
             print(self)
     
-    def run_bot_7(self, a_val):
+    def run_bot_7(self, a_val: float):
         leak_prob = [[1/ (len(self.open_cells_list) - 1)] * self.D for _ in range(self.D)]
         for i in range(self.D):
             for j in range(self.D):
@@ -552,18 +577,35 @@ class Ship():
                     leak_prob[i][j] = 0
 
         bot_x, bot_y = self.bot
-        leak_prob[bot_x + 1][bot_y] = 0
         total_actions = 0
-
-        dist_to_leak = self.find_shortest_path(self.bot, self.leak)
-        prob_beep = math.exp(-1 * a_val * (dist_to_leak - 1))
         
-        # while self.bot != self.leak:
-        #     leak_prob[bot_x, bot_y] = 0
-        #     leak_prob = self.update_mat_enter(leak_prob)
-        #     #sense action
-        #     dist_to_leak = self.find_shortest_path(self.bot, self.leak)
-        #     prob_beep = math.exp(-1 * a_val * (dist_to_leak - 1))
+        for x in range(self.D):
+            for y in range(self.D):
+                print(leak_prob[x][y])
+            print("\n")
+        
+        while self.bot != self.leak:
+            leak_prob[bot_x][bot_y] = 0
+            leak_prob = self.update_mat_enter(leak_prob)
+            beep = 0
+            for x in range(self.D):
+                for y in range(self.D):
+                    print(leak_prob[x][y])
+            print("\n")
+            #sense action
+            dist_to_leak = len(self.find_shortest_path(self.bot, self.leak)) - 1
+            prob_beep = math.exp( -a_val * (dist_to_leak - 1))
+            rand = random.random()
+            if rand <= prob_beep:
+                beep = 1
+            total_actions += 1
+            
+            print(prob_beep)
+            #updating probability matrix depending on the beep
+            if beep == 1:
+                leak_prob = self.update_mat_beep(leak_prob, a_val)
+            print(beep)
+            time.sleep(100000)
 
 
     
@@ -579,7 +621,7 @@ if __name__ == "__main__":
     ship.k_val = k_val
     ship.generate_ship()
     print(ship)
-
+    print(math.exp( -0.1 * (2 - 1)))
     ans = int(input("Which bot do you want to run?\n1.Bot 1\n2.Bot 2\n3.Bot 3\n4.Bot 4\n5.Bot 5\n6.Bot 6\n7.Bot 7\n8.Bot 8\n9.Bot: 9\n"))
 
     if ans == 1:
@@ -596,7 +638,8 @@ if __name__ == "__main__":
     elif ans == 6:
         ship.run_bot_6()
     elif ans == 7:
-        ship.run_bot_7()
+        alpha_val = float(input("Insert the Alpha value:\n"))
+        ship.run_bot_7(alpha_val)
     elif ans == 8:
         ship.run_bot_8()
     elif ans == 9:
