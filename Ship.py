@@ -152,6 +152,7 @@ class Ship():
         else:
             return f"Invalid color code: {color}"
 
+
         # Finds the shortest path from the start coordinate to the goal coordinate, considering constraints.
         # Returns the length of the shortest path or -1 if no path is found.
     def find_shortest_path(self, start: tuple, end: tuple, constraints: list = []) -> list:  
@@ -237,32 +238,71 @@ class Ship():
     
     def update_mat_beep(self, prob_mat, a_val) -> list[list[float]]:
         temp_mat = [[0.0 for _ in range(self.D)] for _ in range(self.D)]
-        dist_mat = [[0 for _ in range(self.D)] for _ in range(self.D)]
+        sum_prob = 0.0
+        
+        for x in range(self.D):
+            for y in range(self.D):
+                dist = 0
+                if (x,y) in self.open_cells_list:
+                    dist = len(self.find_shortest_path((x,y), self.bot)) - 1
+                    temp_mat[x][y] = math.exp( -a_val * (dist - 1))
+                print(dist)
+                print(temp_mat[x][y])
+            print("\n")
+
         for x in range(self.D):
             for y in range(self.D):
                 if (x,y) in self.open_cells_list:
-                    dist_mat[x][y] = len(self.find_shortest_path((x,y), self.bot)) - 1
-                print(dist_mat[x][y])
-            print("\n")
-            
-        print("beep Probability now\n")
+                    temp_mat[x][y] = (temp_mat[x][y] * prob_mat[x][y])
+                    sum_prob += temp_mat[x][y]
+        
         for x in range(self.D):
             for y in range(self.D):
-                pow = math.exp( -a_val * (dist_mat[x][y]) - 1)
+                temp_mat[x][y] = temp_mat[x][y] / sum_prob
+
+        test_sum = 0.0
+        for x in range(self.D):
+            for y in range(self.D):
+                test_sum += temp_mat[x][y]
+                print(x, y)
+                print (temp_mat[x][y])
+        print (test_sum)        
+                
+
+    def update_mat_nobeep(self, prob_mat, a_val) -> list[list[float]]:
+        temp_mat = [[0.0 for _ in range(self.D)] for _ in range(self.D)]
+        sum_prob = 0.0
+        
+        for x in range(self.D):
+            for y in range(self.D):
+                dist = 0
                 if (x,y) in self.open_cells_list:
-                    temp_mat[x][y] = math.exp( -a_val * (dist_mat[x][y] - 1))
-                print(dist_mat[x][y])
-                print(pow)
+                    dist = len(self.find_shortest_path((x,y), self.bot)) - 1
+                    temp_mat[x][y] = 1 - (math.exp( -a_val * (dist - 1)))
+                print(dist)
+                print(temp_mat[x][y])
             print("\n")
-            print("\n")
-        # for x in range(self.D):
-        #     for y in range(self.D):
-        #         temp_mat[x][y] = temp_mat[x][y] * 
-        #     print("\n")
+
+        for x in range(self.D):
+            for y in range(self.D):
+                if (x,y) in self.open_cells_list:
+                    temp_mat[x][y] = (temp_mat[x][y] * prob_mat[x][y])
+                    sum_prob += temp_mat[x][y]
+        
+        for x in range(self.D):
+            for y in range(self.D):
+                temp_mat[x][y] = temp_mat[x][y] / sum_prob
+
+        test_sum = 0.0
+        for x in range(self.D):
+            for y in range(self.D):
+                test_sum += temp_mat[x][y]
+                print(x, y)
+                print (temp_mat[x][y])
+        print (test_sum)   
 
 
     def run_bot_1(self):
-        
         # Initialize a queue for BFS
         queue = deque([(self.bot, 0)])  # Each queue element is a tuple (location, distance)
 
@@ -354,7 +394,6 @@ class Ship():
                 # or P(leak in matrix [x][y] | NO beep in current position)
                 # this might be trick because you have to find the shortest path (make another helper method for this, you can use the bfs algo from the last project but modified)
                 # from the bot to the leak in order to get the D value for the probability (save this value as it might be used later)
-
 
     def run_bot_3(self, alpha):
         #create a probability matrix the same size of the ship
@@ -493,7 +532,6 @@ class Ship():
                     self.actions_counter += distance_traveled
             print(self)
 
-    
     def run_bot_6(self):
         while True:
             new_x = random.randint(0, self.D - 1)
@@ -592,6 +630,7 @@ class Ship():
                 for y in range(self.D):
                     print(leak_prob[x][y])
             print("\n")
+
             #sense action
             dist_to_leak = len(self.find_shortest_path(self.bot, self.leak)) - 1
             prob_beep = math.exp( -a_val * (dist_to_leak - 1))
@@ -600,10 +639,16 @@ class Ship():
                 beep = 1
             total_actions += 1
             
-            print(prob_beep)
+            print(f"PROB BEEP------> {prob_beep}")
             #updating probability matrix depending on the beep
             if beep == 1:
                 leak_prob = self.update_mat_beep(leak_prob, a_val)
+            else:
+                leak_prob = self.update_mat_nobeep(leak_prob, a_val)
+                
+
+            # for (x,y) in self.directions:
+            #      new_x, new_y = x + curr_x, y + curr_y
             print(beep)
             time.sleep(100000)
 
