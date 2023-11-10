@@ -304,24 +304,38 @@ class Ship():
 
     def run_bot_1(self):
         # Initialize a queue for BFS
-        queue = deque([(self.bot, 0)])  # Each queue element is a tuple (location, distance)
+        queue = deque([self.bot])  # Each queue element is a tuple (location, distance)
 
         # Initialize a set to keep track of visited locations
         visited = set()
 
         while queue:
-            current_location, distance = queue.popleft()
+            current_location = queue.popleft()
             
             # Check if the current location is the leak
             if current_location == self.leak:
                 print("Congratulations, you found the leak!")
                 print(f"Total amount of actions = {self.actions_counter}")
                 return
-
+            
             # Sense action and mark the location as visited
             if self.sense_action():
                 print("Leak found")
-                visited.add(current_location)
+                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
+                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
+                            print(f"Moving to location ({x}, {y})")
+                            print(self)
+                            visited.add((x, y))
+                            self.ship[self.bot[0]][self.bot[1]] = 'O'
+                            self.bot = (x, y)
+                            self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                            self.actions_counter += 1  
+                        
+                            if self.bot == self.leak:
+                                print("Congratulations, you found the leak!")
+                                print(f"Total amount of actions = {ship.actions_counter}")  
+                                return
 
             # Explore neighboring cells
             for dx, dy in self.directions:
@@ -330,17 +344,14 @@ class Ship():
                 # Check if the new location is valid and not visited
                 if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D and self.ship[new_location[0]][new_location[1]] != 'X' and new_location not in visited:
                     print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    print(self)
                     visited.add(new_location)
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = new_location
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                    queue.append((new_location, distance + 1))
+                    queue.append(new_location)
                     self.actions_counter += 1
-            print(self)
-
-        print("Leak not found")
-        print(f"Total amount of actions = {self.actions_counter}")
-
+            
     def run_bot_2(self):
         # Initialize a set to keep track of visited locations
         visited = set()
@@ -472,53 +483,59 @@ class Ship():
         self.ship[new_x][new_y] = self.colored_block('g')
         self.second_leak = (new_x, new_y)
 
-        visited = set()
-        leaks_found = 0  # To keep track of the number of leaks found
+        queue = deque([self.bot])  # Each queue element is a tuple (location, distance)
 
-        while leaks_found < 2:
+        visited = set()
+
+        # Keep track of leaks found
+        leaks_found = 0
+
+        while queue and leaks_found < 2:
+            current_location = queue.popleft()
+
+            # Sense action and mark the location as visited
             if self.sense_action_for_two():
                 print("Leak found")
-                # Leak is in the detection square, search for it
                 for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
                     for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
                         if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
+                            print(self)
                             visited.add((x, y))
                             self.ship[self.bot[0]][self.bot[1]] = 'O'
                             self.bot = (x, y)
                             self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                            
-                            if leaks_found == 2:
-                                print("You won")
-                                print(f"Total amount of actions = {ship.actions_counter}")
-                                return
-                            
+                            self.actions_counter += 1  
+                        
                             if self.bot == self.leak:
-                                self.ship[self.leak[0]][self.leak[1]] = 'O'
+                                print("Congratulations, you found the original leak!")
+                                print(f"Total amount of actions so far = {ship.actions_counter}") 
+                                leaks_found += 1
                                 self.leak = None
-                                print("first leak found")
-                                leaks_found += 1
-                            elif self.bot == self.second_leak:
-                                print("second leak found")
-                                self.ship[self.second_leak[0]][self.second_leak[1]] = 'O'
-                                self.second_leak = None
-                                leaks_found += 1
                                 
-            else:
-                print("Leak not found")
-                # Leak is not in the detection square, move the bot
-                possible_moves = [(self.bot[0] + dx, self.bot[1] + dy) for dx, dy in self.directions]
-                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X']
-                unvisited_moves = [move for move in valid_moves if move not in visited]
+                            if self.bot == self.second_leak:
+                                print("Congratulations, you found the second leak!")
+                                print(f"Total amount of actions so far = {ship.actions_counter}")
+                                leaks_found += 1
+                                self.second_leak = None
+            if leaks_found == 2:
+                print("Both leaks found!")
+                print(f"Total amount of actions = {ship.actions_counter}")
+                break
 
-                if unvisited_moves:
-                    # Choose an unvisited location to move to
-                    new_location = random.choice(unvisited_moves)
+            # Explore neighboring cells
+            for dx, dy in self.directions:
+                new_location = (current_location[0] + dx, current_location[1] + dy)
+
+                # Check if the new location is valid and not visited
+                if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D and self.ship[new_location[0]][new_location[1]] != 'X' and new_location not in visited:
                     print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    print(self)
                     visited.add(new_location)
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = new_location
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    queue.append(new_location)
                     self.actions_counter += 1
 
                 else:
@@ -532,6 +549,7 @@ class Ship():
                     self.actions_counter += distance_traveled
             print(self)
 
+    
     def run_bot_6(self):
         while True:
             new_x = random.randint(0, self.D - 1)
