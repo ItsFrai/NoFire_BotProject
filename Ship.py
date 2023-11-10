@@ -2,6 +2,7 @@
 import random
 import math
 import time
+from collections import deque
 
 class Ship():
     def __init__(self):
@@ -234,70 +235,46 @@ class Ship():
         
         return prob_mat
 
-    
-            
 
-    
     def run_bot_1(self):
+        
+        # Initialize a queue for BFS
+        queue = deque([(self.bot, 0)])  # Each queue element is a tuple (location, distance)
+
         # Initialize a set to keep track of visited locations
         visited = set()
 
-        while self.bot != self.leak:
+        while queue:
+            current_location, distance = queue.popleft()
+            
+            # Check if the current location is the leak
+            if current_location == self.leak:
+                print("Congratulations, you found the leak!")
+                print(f"Total amount of actions = {self.actions_counter}")
+                return
+
+            # Sense action and mark the location as visited
             if self.sense_action():
                 print("Leak found")
-                # Leak is in the detection square, search for it
-                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
-                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
-                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D  and self.ship[x][y] != 'X':
-                            print(f"Moving to location ({x}, {y})")
-                            visited.add((x, y))
-                            self.ship[self.bot[0]][self.bot[1]] = 'O'
-                            self.bot = (x, y)
-                            self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')  
-                        
-                            if self.bot == self.leak:
-                                print("Congratulations, you found the leak!")
-                                print(f"Total amount of actions = {ship.actions_counter}")  
-                                return
+                visited.add(current_location)
 
-            else:
-                print("Leak not found")
-                # Leak is not in the detection square, move the bot
-                possible_moves = [(self.bot[0] + dx, self.bot[1] + dy) for dx, dy in self.directions]
-                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X']
-                unvisited_moves = [move for move in valid_moves if move not in visited]
+            # Explore neighboring cells
+            for dx, dy in self.directions:
+                new_location = (current_location[0] + dx, current_location[1] + dy)
 
-                if unvisited_moves:
-                    # Choose an unvisited location to move to
-                    new_location = random.choice(unvisited_moves)
+                # Check if the new location is valid and not visited
+                if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D and self.ship[new_location[0]][new_location[1]] != 'X' and new_location not in visited:
                     print(f"Moving to location ({new_location[0]}, {new_location[1]})")
                     visited.add(new_location)
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = new_location
-                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')  
-
-                    self.actions_counter += 1
-                                        
-                else:
-                    # All neighboring cells are visited; backtrack to a previous location
-                    prev_location = self.bot
-                    self.ship[self.bot[0]][self.bot[1]] = 'O'
-                    self.bot = visited.pop()
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                    print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
-                    distance_traveled = int(math.sqrt((self.bot[0] - prev_location[0])**2 + (self.bot[1] - prev_location[1])**2))
-                    self.actions_counter += distance_traveled
+                    queue.append((new_location, distance + 1))
+                    self.actions_counter += 1
             print(self)
-            
-       
 
-    
-        #while self.leak != self.bot
-            #do a sense check and see if it is in the square
-                # if it is, then iterate through all the -'s within the bot and once you find the leak print you won and break
-            #if it is not in the square after sensing, move the bot to any other location that wasn't visited in the grid based on its location, 
-            # meaning up 1 down 1 left 1 or right 1. from here, go back up and do the while loop again, and then use the sense again until you find the leak
-
+        print("Leak not found")
+        print(f"Total amount of actions = {self.actions_counter}")
 
     def run_bot_2(self):
         # Initialize a set to keep track of visited locations
@@ -338,7 +315,8 @@ class Ship():
                 self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                 self.actions_counter += 1
                 if (self.bot == self.leak):
-                    print("Congrats you found the leak!")
+                    print("Congratulations, you found the leak!")
+                    print(f"Total amount of actions = {ship.actions_counter}")  
                     return
                
             print(self)
@@ -448,7 +426,7 @@ class Ship():
                             
                             if leaks_found == 2:
                                 print("You won")
-                                print(self.actions_counter)
+                                print(f"Total amount of actions = {ship.actions_counter}")
                                 return
                             
                             if self.bot == self.leak:
