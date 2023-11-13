@@ -540,17 +540,6 @@ class Ship():
                     queue.append(new_location)
                     self.actions_counter += 1
 
-                else:
-                    # All neighboring cells are visited; backtrack to a previous location
-                    prev_location = self.bot
-                    self.ship[self.bot[0]][self.bot[1]] = 'O'
-                    self.bot = visited.pop()
-                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                    print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
-                    distance_traveled = int(math.sqrt((self.bot[0] - prev_location[0])**2 + (self.bot[1] - prev_location[1])**2))
-                    self.actions_counter += distance_traveled
-            print(self)
-
     
     def run_bot_6(self):
         while True:
@@ -616,17 +605,6 @@ class Ship():
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                     self.actions_counter += 1
 
-                else:
-                    # All neighboring cells are visited; backtrack to a previous location
-                    prev_location = self.bot
-                    self.ship[self.bot[0]][self.bot[1]] = 'O'
-                    self.bot = visited.pop()
-                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                    print(f"Backtracking to location ({self.bot[0]}, {self.bot[1]})")
-                    distance_traveled = int(math.sqrt((self.bot[0] - prev_location[0])**2 + (self.bot[1] - prev_location[1])**2))
-                    self.actions_counter += distance_traveled
-            print(self)
-    
     def run_bot_7(self, a_val: float):
         leak_prob = [[1/ (len(self.open_cells_list) - 1)] * self.D for _ in range(self.D)]
         for i in range(self.D):
