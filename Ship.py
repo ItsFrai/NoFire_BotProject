@@ -363,10 +363,12 @@ class Ship():
                     for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
                         if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
+                            print(self)
                             visited.add((x, y))
                             self.ship[self.bot[0]][self.bot[1]] = 'O'
                             self.bot = (x, y)
                             self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')  
+                            self.actions_counter += 1
                         
                             if self.bot == self.leak:
                                 print("Congratulations, you found the leak!")
@@ -385,6 +387,7 @@ class Ship():
                 # Move to the next location on the shortest path
                 new_location = shortest_path[0]
                 print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                print(self)
                 visited.add(self.bot)
                 self.ship[self.bot[0]][self.bot[1]] = 'O'
                 self.bot = new_location
@@ -395,7 +398,6 @@ class Ship():
                     print(f"Total amount of actions = {ship.actions_counter}")  
                     return
                
-            print(self)
             
             
         #sense_action (for probabilistic determination)
