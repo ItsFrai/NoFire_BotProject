@@ -114,24 +114,13 @@ class Ship():
                     if self.ship[x][y] == '-':
                         self.ship[x][y] = 'X' 
 
-            while self.bot == (-1, -1) or self.leak == (-1, -1):
+            while self.bot == (-1, -1):
                 rand_x_coord = random.randint(0, self.D - 1)
                 rand_y_coord = random.randint(0, self.D - 1)
 
                 if self.bot == (-1, -1):
                     self.ship[rand_x_coord][rand_y_coord] = self.colored_block('c')
                     self.init_bot_location = self.bot = (rand_x_coord, rand_y_coord)
-                elif self.leak == (-1, -1):
-
-
-                    # Ensure the leak is at least k_val + 1 cells away from the square
-                    while True:
-                        leak_x = random.randint(0, self.D - 1)
-                        leak_y = random.randint(0, self.D - 1)
-                        if (abs(leak_x - self.bot[0]) > self.k_val + 1 or abs(leak_y - self.bot[1]) > self.k_val + 1):
-                            self.ship[leak_x][leak_y] = self.colored_block('g')
-                            self.leak = (leak_x, leak_y)
-                            break
                         
 
         for x in range(self.D):
@@ -219,8 +208,9 @@ class Ship():
     # Obtains the radius of the bot within ship bounds
     def get_detection_square(self):
         detection_square = []
-        for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
-            for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+        k_val = int(self.k_val)         
+        for x in range(self.bot[0] - k_val, self.bot[0] + k_val + 1):
+            for y in range(self.bot[1] - k_val, self.bot[1] + k_val + 1):
                 if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                     detection_square.append((x, y))
         return detection_square
@@ -343,6 +333,16 @@ class Ship():
 
         # Initialize a set to keep track of visited locations
         visited = set()
+        
+        if self.leak == (-1, -1):
+            while True:
+                leak_x = random.randint(0, self.D - 1)
+                leak_y = random.randint(0, self.D - 1)
+                if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.leak = (leak_x, leak_y)
+                    print(f"Leak generated at location {self.leak}")
+                    break
 
         while queue:
             current_location = queue.popleft()
@@ -390,6 +390,16 @@ class Ship():
     def run_bot_2(self, k):
         # Initialize a set to keep track of visited locations
         visited = set()
+        
+        if self.leak == (-1, -1):
+            while True:
+                leak_x = random.randint(0, self.D - 1)
+                leak_y = random.randint(0, self.D - 1)
+                if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.leak = (leak_x, leak_y)
+                    print(f"Leak generated at location {self.leak}")
+                    break
 
         while self.bot != self.leak:
             # Sense only if it's been a while since the last sense or move
@@ -571,11 +581,21 @@ class Ship():
         return total_actions
 
     def run_bot_5(self, k): 
+        
+        if self.leak == (-1, -1):
+            while True:
+                leak_x = random.randint(0, self.D - 1)
+                leak_y = random.randint(0, self.D - 1)
+                if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.leak = (leak_x, leak_y)
+                    print(f"Leak generated at location {self.leak}")
+                    break
         while True:
         
             new_x = random.randint(0, self.D - 1)
             new_y = random.randint(0, self.D - 1)
-            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X' and (abs(new_x - self.bot[0]) > self.k_val + 1 or abs(new_y - self.bot[1]) > self.k_val + 1):
+            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X' and (abs(new_x - self.bot[0]) > k + 1 or abs(new_y - self.bot[1]) > k + 1):
                 break
         # Add the second leak to the ship grid
         self.ship[new_x][new_y] = self.colored_block('g')
@@ -594,8 +614,8 @@ class Ship():
             # Sense action and mark the location as visited
             if self.sense_action_for_two():
                 print("Leak found")
-                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
-                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                for x in range(self.bot[0] - k, self.bot[0] + k + 1):
+                    for y in range(self.bot[1] - k, self.bot[1] + k + 1):
                         if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
                             print(self)
@@ -639,10 +659,20 @@ class Ship():
     
     def run_bot_6(self, k):
         
+        if self.leak == (-1, -1):
+            while True:
+                leak_x = random.randint(0, self.D - 1)
+                leak_y = random.randint(0, self.D - 1)
+                if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.leak = (leak_x, leak_y)
+                    print(f"Leak generated at location {self.leak}")
+                    break
+        
         while True:
             new_x = random.randint(0, self.D - 1)
             new_y = random.randint(0, self.D - 1)
-            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X' and (abs(new_x - self.bot[0]) > self.k_val + 1 or abs(new_y - self.bot[1]) > self.k_val + 1):
+            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X' and (abs(new_x - self.bot[0]) > k + 1 or abs(new_y - self.bot[1]) > k + 1):
                 break
         # Add the second leak to the ship grid
         self.ship[new_x][new_y] = self.colored_block('g')
@@ -719,8 +749,8 @@ class Ship():
                               
             if self.sense_action_for_two():
                 print("Leak found")
-                for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
-                    for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
+                for x in range(self.bot[0] - k, self.bot[0] + k + 1):
+                    for y in range(self.bot[1] - k, self.bot[1] + k + 1):
                         if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
                             print(self)
