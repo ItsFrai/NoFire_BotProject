@@ -476,11 +476,11 @@ class Ship():
     def run_bot_5(self): 
         
         while True:
+        
             new_x = random.randint(0, self.D - 1)
             new_y = random.randint(0, self.D - 1)
-            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X':
+            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X' and (abs(new_x - self.bot[0]) > self.k_val + 1 or abs(new_y - self.bot[1]) > self.k_val + 1):
                 break
-
         # Add the second leak to the ship grid
         self.ship[new_x][new_y] = self.colored_block('g')
         self.second_leak = (new_x, new_y)
@@ -542,68 +542,129 @@ class Ship():
 
     
     def run_bot_6(self):
+        
         while True:
             new_x = random.randint(0, self.D - 1)
             new_y = random.randint(0, self.D - 1)
-            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X':
+            if (new_x != self.leak[0] or new_y != self.leak[1]) and (new_x != self.bot[0] or new_y != self.bot[1]) and self.ship[new_x][new_y] != 'X' and (abs(new_x - self.bot[0]) > self.k_val + 1 or abs(new_y - self.bot[1]) > self.k_val + 1):
                 break
-
         # Add the second leak to the ship grid
         self.ship[new_x][new_y] = self.colored_block('g')
         self.second_leak = (new_x, new_y)
 
         visited = set()
+        
+        queue = deque([self.bot])
+
         leaks_found = 0  # To keep track of the number of leaks found
 
-        while leaks_found < 2:
+        while queue and leaks_found < 2:
             
+            current_location = queue.popleft()
+                        
             if self.sense_action_bothleaks():
-                print("both leaks in detection square")
+                print("Both leaks found good job!")
+                print(self)
                 
-            elif self.sense_action_for_two():
+                # Find the shortest path to the first leak
+                path_to_first_leak = self.find_shortest_path(start=self.bot, end=self.leak)
+                # Find the shortest path to the second leak
+                path_to_second_leak = self.find_shortest_path(start=self.bot, end=self.second_leak)
+
+                # Determine which path is shorter
+                if len(path_to_first_leak) <= len(path_to_second_leak):
+                    shortest_path = path_to_first_leak
+                    target_leak = self.leak
+                    other_path = path_to_second_leak
+                    other_target_leak = self.second_leak
+                else:
+                    shortest_path = path_to_second_leak
+                    target_leak = self.second_leak
+                    other_path = path_to_first_leak
+                    other_target_leak = self.leak
+
+                # Move along the shortest path to the first leak
+                for location in shortest_path:
+                    print(f"Moving to location ({location[0]}, {location[1]})")
+                    visited.add(location)
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = location
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    self.actions_counter += 1
+
+                    if self.bot == target_leak:
+                        print(f"Congratulations, you found the leak at {target_leak}!")
+                        print(f"Total amount of actions so far = {ship.actions_counter}") 
+
+                        leaks_found += 1
+                        if target_leak == self.leak:
+                            self.leak = None     
+                        else:
+                            self.second_leak = None
+                # Move along the other path
+                for location in other_path:
+                    print(f"Moving to location ({location[0]}, {location[1]})")
+                    visited.add(location)
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = location
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    self.actions_counter += 1
+
+                    if self.bot == other_target_leak:
+                        print(f"Congratulations, you found the leak at {other_target_leak}!")
+                        print(f"Total amount of actions = {ship.actions_counter}") 
+
+                        leaks_found += 1
+                        if other_target_leak == self.leak:
+                            self.leak = None
+                        else:
+                            self.second_leak = None
+                continue 
+                              
+            if self.sense_action_for_two():
                 print("Leak found")
-                # Leak is in the detection square, search for it
                 for x in range(self.bot[0] - self.k_val, self.bot[0] + self.k_val + 1):
                     for y in range(self.bot[1] - self.k_val, self.bot[1] + self.k_val + 1):
                         if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
                             print(f"Moving to location ({x}, {y})")
+                            print(self)
                             visited.add((x, y))
                             self.ship[self.bot[0]][self.bot[1]] = 'O'
                             self.bot = (x, y)
                             self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                            
-                            if leaks_found == 2:
-                                print("You won")
-                                print(self.actions_counter)
-                                return
-                            
+                            self.actions_counter += 1  
+                        
                             if self.bot == self.leak:
-                                self.ship[self.leak[0]][self.leak[1]] = 'O'
+                                print("Congratulations, you found the original leak!")
+                                print(f"Total amount of actions so far = {ship.actions_counter}") 
+                                leaks_found += 1
                                 self.leak = None
-                                print("first leak found")
-                                leaks_found += 1
-                            elif self.bot == self.second_leak:
-                                print("second leak found")
-                                self.ship[self.second_leak[0]][self.second_leak[1]] = 'O'
-                                self.second_leak = None
-                                leaks_found += 1
                                 
-            else:
-                print("Leak not found")
-                # Leak is not in the detection square, move the bot
-                possible_moves = [(self.bot[0] + dx, self.bot[1] + dy) for dx, dy in self.directions]
-                valid_moves = [(x, y) for x, y in possible_moves if 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X']
-                unvisited_moves = [move for move in valid_moves if move not in visited]
+                            if self.bot == self.second_leak:
+                                print("Congratulations, you found the second leak!")
+                                print(f"Total amount of actions so far = {ship.actions_counter}")
+                                leaks_found += 1
+                                self.second_leak = None
+            if leaks_found == 2:
+                print("Both leaks found!")
+                print(f"Total amount of actions = {ship.actions_counter}")
+                break
+                                
+            for dx, dy in self.directions:
+                new_location = (current_location[0] + dx, current_location[1] + dy)
 
-                if unvisited_moves:
-                    # Choose an unvisited location to move to
-                    new_location = random.choice(unvisited_moves)
+                # Check if the new location is valid and not visited
+                if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D and self.ship[new_location[0]][new_location[1]] != 'X' and new_location not in visited:
                     print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    print(self)
                     visited.add(new_location)
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = new_location
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    queue.append(new_location)
                     self.actions_counter += 1
+            
+                    
 
     def run_bot_7(self, a_val: float):
         leak_prob = [[1/ (len(self.open_cells_list) - 1)] * self.D for _ in range(self.D)]
