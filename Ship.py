@@ -1,4 +1,3 @@
-
 import random
 import math
 import time
@@ -30,16 +29,11 @@ class Ship():
         for x in range(self.D):
             for y in range(self.D):
                 cell = self.ship[x][y]
-                if (x >= self.bot[0] - self.k_val) and (x <= self.bot[0] + self.k_val) and \
-                (y >= self.bot[1] - self.k_val) and (y <= self.bot[1] + self.k_val):
-                    if (x, y) != self.bot and cell != "X":
-                        ship_str += '[-]'
-                    else:
-                        ship_str += '[' + cell + ']'
-                else:
-                    ship_str += '[' + cell + ']'
-            ship_str += '\n'
+                ship_str += "[" + cell + "]"
+            ship_str += "\n"
+
         return ship_str
+
 
     # given a cordinate and what you're looking for, it will return number of neighbors next to an open cells
     def count_neighbors(self, x: int, y: int, item: str) -> int:
@@ -129,6 +123,7 @@ class Ship():
                             self.ship[leak_x][leak_y] = self.colored_block('g')
                             self.leak = (leak_x, leak_y)
                             break
+
         for x in range(self.D):
             for y in range(self.D):
                 if self.ship[x][y] == 'O' or (x,y) == self.leak:
@@ -187,14 +182,7 @@ class Ship():
             sorted_list = [k for k, _ in sorted(fringe.items(), key=lambda item: item[1])]
         return None
 
-    # Senses if the button is within the radius of the bot
-    def sense_action(self):
-        self.actions_counter += 1
-        if any(cell == self.leak for cell in self.get_detection_square()):
-            return True
 
-        else:
-            return False
     def sense_action_for_two(self):
 
         self.actions_counter += 1
@@ -240,15 +228,16 @@ class Ship():
         temp_mat = [[0.0 for _ in range(self.D)] for _ in range(self.D)]
         sum_prob = 0.0
         
+        # for each cell, finds prob of beep based on distance to bot if open cell
         for x in range(self.D):
             for y in range(self.D):
                 dist = 0
                 if (x,y) in self.open_cells_list:
                     dist = len(self.find_shortest_path((x,y), self.bot)) - 1
                     temp_mat[x][y] = math.exp( -a_val * (dist - 1))
-                print(dist)
-                print(temp_mat[x][y])
-            print("\n")
+                # print(dist)
+                # print(temp_mat[x][y])
+            # print("\n")
 
         for x in range(self.D):
             for y in range(self.D):
@@ -259,14 +248,22 @@ class Ship():
         for x in range(self.D):
             for y in range(self.D):
                 temp_mat[x][y] = temp_mat[x][y] / sum_prob
+                # print(temp_mat[x][y], end=" ")
+            # print()
 
-        test_sum = 0.0
-        for x in range(self.D):
-            for y in range(self.D):
-                test_sum += temp_mat[x][y]
-                print(x, y)
-                print (temp_mat[x][y])
-        print (test_sum)        
+        # if input("want to continue?") == "n":
+        #         exit()
+        # test_sum = 0.0
+        # for x in range(self.D):
+        #     for y in range(self.D):
+        #         test_sum += temp_mat[x][y]
+                # print(x, y)
+                # print (temp_mat[x][y])
+        # print(test_sum)
+        
+        
+        
+        return temp_mat 
                 
 
     def update_mat_nobeep(self, prob_mat, a_val) -> list[list[float]]:
@@ -279,9 +276,9 @@ class Ship():
                 if (x,y) in self.open_cells_list:
                     dist = len(self.find_shortest_path((x,y), self.bot)) - 1
                     temp_mat[x][y] = 1 - (math.exp( -a_val * (dist - 1)))
-                print(dist)
-                print(temp_mat[x][y])
-            print("\n")
+            #     print(dist)
+            #     print(temp_mat[x][y])
+            # print("\n")
 
         for x in range(self.D):
             for y in range(self.D):
@@ -292,17 +289,22 @@ class Ship():
         for x in range(self.D):
             for y in range(self.D):
                 temp_mat[x][y] = temp_mat[x][y] / sum_prob
+                # print(temp_mat[x][y], end=" ")
+            # print()
 
-        test_sum = 0.0
-        for x in range(self.D):
-            for y in range(self.D):
-                test_sum += temp_mat[x][y]
-                print(x, y)
-                print (temp_mat[x][y])
-        print (test_sum)   
+        # if input("want to continue") == "n":
+        #         exit()
+        # test_sum = 0.0
+        # for x in range(self.D):
+        #     for y in range(self.D):
+        #         test_sum += temp_mat[x][y]
+                # print(x, y)
+                # print (temp_mat[x][y])
+        # print (test_sum)   
+        return temp_mat
 
 
-    def run_bot_1(self):
+    def run_bot_1(self, k):
         # Initialize a queue for BFS
         queue = deque([self.bot])  # Each queue element is a tuple (location, distance)
 
@@ -673,23 +675,21 @@ class Ship():
                 if (i,j) not in self.open_cells_list:
                     leak_prob[i][j] = 0
 
-        bot_x, bot_y = self.bot
         total_actions = 0
-        
-        for x in range(self.D):
-            for y in range(self.D):
-                print(leak_prob[x][y])
-            print("\n")
-        
+            
         while self.bot != self.leak:
+            bot_x, bot_y = self.bot
             leak_prob[bot_x][bot_y] = 0
             leak_prob = self.update_mat_enter(leak_prob)
             beep = 0
-            for x in range(self.D):
-                for y in range(self.D):
-                    print(leak_prob[x][y])
-            print("\n")
-
+            # prints the initial matrix prob
+            # for x in range(self.D):
+            #     for y in range(self.D):
+            #         print(leak_prob[x][y], end="-->")
+            #     print("\n")
+            
+            # if input("want to continue") == "n":
+            #     exit()
             #sense action
             dist_to_leak = len(self.find_shortest_path(self.bot, self.leak)) - 1
             prob_beep = math.exp( -a_val * (dist_to_leak - 1))
@@ -697,19 +697,40 @@ class Ship():
             if rand <= prob_beep:
                 beep = 1
             total_actions += 1
-            
-            print(f"PROB BEEP------> {prob_beep}")
-            #updating probability matrix depending on the beep
+
+            # print(f"PROB BEEP------> {prob_beep, rand}")
+            #updating probability matrix depending if there is a beep
             if beep == 1:
                 leak_prob = self.update_mat_beep(leak_prob, a_val)
             else:
                 leak_prob = self.update_mat_nobeep(leak_prob, a_val)
-                
 
-            # for (x,y) in self.directions:
-            #      new_x, new_y = x + curr_x, y + curr_y
-            print(beep)
-            time.sleep(100000)
+            # prints leak_prob matrix for debugging
+            # for x in range(self.D):
+            #     for y in range(self.D):
+            #         print(leak_prob[x][y], end=" ")
+            #     print("\n")
+
+            max_val = leak_prob[0][0]
+            new_x = 0
+            new_y = 0
+            for i in range(self.D):
+                for j in range(self.D):
+                    if leak_prob[i][j] > max_val:
+                        max_val = leak_prob[i][j]
+                        new_x = i
+                        new_y = j
+
+            self.ship[bot_x][bot_y] = "O"
+            self.ship[new_x][new_y] = self.colored_block('c')
+            print(f"RELOCATING TO {(new_x, new_y)}")
+            print(f"BEGAN AT: {(bot_x, bot_y)}")
+            print(self) 
+            self.bot = (new_x, new_y)
+            
+        print(f"Congratulations! You found the leak in {total_actions} actions!")
+        return total_actions
+            
 
     
     def run_bot_8(self, k_val):
@@ -728,8 +749,10 @@ if __name__ == "__main__":
     ans = int(input("Which bot do you want to run?\n1.Bot 1\n2.Bot 2\n3.Bot 3\n4.Bot 4\n5.Bot 5\n6.Bot 6\n7.Bot 7\n8.Bot 8\n9.Bot: 9\n"))
 
     if ans == 1:
+        k = int(input("What is your k value?\n"))
         ship.run_bot_1()
     elif ans == 2:
+        k = int(input("What is your k value?\n"))
         ship.run_bot_2()
     elif ans == 3:
         alpha = int(input("What is your aplha value?\n"))
