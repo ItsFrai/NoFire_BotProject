@@ -570,7 +570,7 @@ class Ship():
         print(f"Congratulations! You found the leak in {total_actions} actions!")
         return total_actions
 
-    def run_bot_5(self): 
+    def run_bot_5(self, k): 
         while True:
         
             new_x = random.randint(0, self.D - 1)
@@ -637,7 +637,7 @@ class Ship():
                     self.actions_counter += 1
 
     
-    def run_bot_6(self):
+    def run_bot_6(self, k):
         
         while True:
             new_x = random.randint(0, self.D - 1)
@@ -929,9 +929,13 @@ if __name__ == "__main__":
             alpha = float(input("What is your alpha value?\n"))
             ship.run_bot_4(alpha)
         elif ans == 5:
-            ship.run_bot_5()
+            k = int(input("What is your k value?\n"))
+            ship.k_val = k
+            ship.run_bot_5(k)
         elif ans == 6:
-            ship.run_bot_6()
+            k = int(input("What is your k value?\n"))
+            ship.k_val = k
+            ship.run_bot_6(k)
         elif ans == 7:
             alpha = float(input("Insert the Alpha value:\n"))
             ship.run_bot_7(alpha)
