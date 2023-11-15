@@ -220,7 +220,6 @@ class Ship():
 
 
     def update_mat_enter(self, prob_mat) -> list[list[float]]:
-        temp_mat = prob_mat
         sum_prob = 0
         for x in range(self.D):
             for y in range(self.D):
@@ -245,9 +244,6 @@ class Ship():
                 if (x,y) in self.open_cells_list:
                     dist = len(self.find_shortest_path((x,y), self.bot)) - 1
                     temp_mat[x][y] = math.exp( -a_val * (dist - 1))
-                # print(dist)
-                # print(temp_mat[x][y])
-            # print("\n")
 
         for x in range(self.D):
             for y in range(self.D):
@@ -258,18 +254,7 @@ class Ship():
         for x in range(self.D):
             for y in range(self.D):
                 temp_mat[x][y] = temp_mat[x][y] / sum_prob
-                # print(temp_mat[x][y], end=" ")
-            # print()
 
-        # if input("want to continue?") == "n":
-        #         exit()
-        # test_sum = 0.0
-        # for x in range(self.D):
-        #     for y in range(self.D):
-        #         test_sum += temp_mat[x][y]
-                # print(x, y)
-                # print (temp_mat[x][y])
-        # print(test_sum)
         return temp_mat    
 
     def update_mat_nobeep(self, prob_mat, a_val) -> list[list[float]]:
@@ -282,9 +267,6 @@ class Ship():
                 if (x,y) in self.open_cells_list:
                     dist = len(self.find_shortest_path((x,y), self.bot)) - 1
                     temp_mat[x][y] = 1 - (math.exp( -a_val * (dist - 1)))
-            #     print(dist)
-            #     print(temp_mat[x][y])
-            # print("\n")
 
         for x in range(self.D):
             for y in range(self.D):
@@ -295,36 +277,63 @@ class Ship():
         for x in range(self.D):
             for y in range(self.D):
                 temp_mat[x][y] = temp_mat[x][y] / sum_prob
-                # print(temp_mat[x][y], end=" ")
-            # print()
-
-        # if input("want to continue") == "n":
-        #         exit()
-        # test_sum = 0.0
-        # for x in range(self.D):
-        #     for y in range(self.D):
-        #         test_sum += temp_mat[x][y]
-                # print(x, y)
-                # print (temp_mat[x][y])
-        # print (test_sum)   
+ 
         return temp_mat
 
     def update_mat_enter_mult(self, prob_mat) -> dict:
             
         sum_prob = sum(prob_mat.values())
         
-        for key, value in prob_mat.items():
+        for key,value in prob_mat.items():
             prob_mat[key] /= sum_prob
             
         return prob_mat
     
     def update_mat_beep_mult(self, prob_mat, a_val) -> dict:
         
+        sum_prob = 0
         
-        pass
+        for key, value in prob_mat.items():
+            leak_1, leak_2 = key
+            dist_leak_1 = len(self.find_shortest_path((self.bot), (leak_1))) - 1
+            dist_leak_2 = len(self.find_shortest_path((self.bot), (leak_2))) - 1
+            prob_beep_1 = math.exp( -a_val * (dist_leak_1 - 1))
+            prob_beep_2 = math.exp( -a_val * (dist_leak_2 - 1))
+            prob_beep = prob_beep_1 + prob_beep_2 - (prob_beep_1 * prob_beep_2)
+            prob_mat[key] *= prob_beep
+            sum_prob += prob_mat[key]
+            
+        for key, value in prob_mat.items():
+            prob_mat[key] /= sum_prob
+            
+        total_sum = sum(prob_mat.values())
+        print(total_sum)
+        
+        return prob_mat
+        
     
     def update_mat_no_beep_mult(self, prob_mat, a_val) -> dict:
-        pass
+        
+        sum_prob = 0
+        
+        for key, value in prob_mat.items():
+            leak_1, leak_2 = key
+            dist_leak_1 = len(self.find_shortest_path((self.bot), (leak_1))) - 1
+            dist_leak_2 = len(self.find_shortest_path((self.bot), (leak_2))) - 1
+            prob_beep_1 = math.exp( -a_val * (dist_leak_1 - 1))
+            prob_beep_2 = math.exp( -a_val * (dist_leak_2 - 1))
+            prob_beep = prob_beep_1 + prob_beep_2 - (prob_beep_1 * prob_beep_2)
+            prob_mat[key] *= (1 - prob_beep)
+            sum_prob += prob_mat[key]
+            
+        for key, value in prob_mat.items():
+            prob_mat[key] /= sum_prob
+            
+        total_sum = sum(prob_mat.values())
+        print(total_sum)
+        
+        return prob_mat
+    
 
 
     def run_bot_1(self, k):
@@ -857,6 +866,16 @@ class Ship():
             
 
     def run_bot_8(self, a_val):
+        #initilizing the first leak
+        if self.leak == (-1, -1):
+            # Ensure the leak is at least k_val + 1 cells away from the square
+            while True:
+                leak_x = random.randint(0, self.D - 1)
+                leak_y = random.randint(0, self.D - 1)
+                if (abs(leak_x - self.bot[0]) > self.k_val + 1 or abs(leak_y - self.bot[1]) > self.k_val + 1):
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.leak = (leak_x, leak_y)
+                    break
         #initilizing the second leak
         while True:
             new_x = random.randint(0, self.D - 1)
@@ -877,8 +896,10 @@ class Ship():
                     for b in range(y, self.D):
                         if (x,y) in self.open_cells_list and (a,b) in self.open_cells_list and (x,y) != (a,b):
                             leak_prob[((x,y), (a,b))] = 0.0
-                            print(f"the probability for ({x},{y}) and ({a},{b}) is {leak_prob[((x,y), (a,b))]}")
         print(len(leak_prob))
+        
+        #initilizing the probability matrix for the 2-Dimensional array
+        prob_mat = [0 * self.D for _ in range(self.D)]
         
         count = 0
         total_actions = 0
@@ -913,7 +934,8 @@ class Ship():
             if rand <= prob_beep:
                 beep = 1
             total_actions += 1
-            
+                        
+            print(beep)
             #update probabilities based on the occurence of the beep
             if beep == 1:
                 leak_prob = self.update_mat_beep_mult(leak_prob, a_val)
@@ -922,8 +944,9 @@ class Ship():
                 
             print ("first update")
             for key, value in leak_prob.items():
-                print(leak_prob[key])
+                print(f"the probability for ({key}) is {leak_prob[key]}")
             
+            print(f"dist to leak 1 = {dist_leak_1} \n dist to leak 2 = {dist_leak_2} \n prob_beep_1 = {prob_beep_1} \n prob_beep_2 = {prob_beep_2}")
             
             print(len(leak_prob))
             time.sleep(10000)
