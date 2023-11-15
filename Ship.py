@@ -2,6 +2,8 @@ import random
 import math
 import time
 from collections import deque
+import matplotlib.pyplot as plt
+
 
 class Ship():
     def __init__(self):
@@ -30,10 +32,34 @@ class Ship():
 
     # Reset instance variables to their initial values
     def reset(self):
-        self.bot = self.init_bot_location
+        bot_x, bot_y = self.bot
+        self.ship[bot_x][bot_y] = 'O'
+        self.bot = (-1,-1)
+                    
+        while self.bot == (-1, -1):
+                rand_x_coord = random.randint(0, self.D - 1)
+                rand_y_coord = random.randint(0, self.D - 1)
+                if self.ship[rand_x_coord][rand_y_coord] != "X": #can't be inside a wall
+                    if self.count_neighbors(rand_x_coord, rand_x_coord, "O") != 0: # can't be blocked in
+                        self.ship[rand_x_coord][rand_y_coord] = self.colored_block('c')
+                        self.init_bot_location = self.bot = (rand_x_coord, rand_y_coord)
+                          
         bot_x, bot_y = self.bot
         self.ship[bot_x][bot_y] = self.colored_block('c')
-        self.ship[self.leak[0]][self.leak[1]] = self.colored_block('g')
+
+
+        leak_x,leak_y = self.leak
+        self.ship[leak_x][leak_y] = 'O'
+        self.leak = (-1,-1)
+        while self.leak == (-1, -1):
+            leak_x = random.randint(0, self.D - 1)
+            leak_y = random.randint(0, self.D - 1)
+            if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
+                self.ship[leak_x][leak_y] = self.colored_block('g')
+                self.leak = (leak_x, leak_y)
+                break
+            
+        self.visited = set()
         self.actions_counter = 0
 
     def __repr__(self):
@@ -412,6 +438,19 @@ class Ship():
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                     queue.append(new_location)
                     self.actions_counter += 1
+                    
+    def run_bot_1_simulation(self, num_simulations):
+        results = []
+        for k in range(1, 15):
+            total_actions = 0
+            for _ in range(num_simulations):
+                ship.reset()
+                self.k_val = k
+                self.run_bot_1(k)
+                total_actions += self.actions_counter
+            average_actions = total_actions / num_simulations
+            results.append((k, average_actions))
+        return results
             
     def run_bot_2(self, k):
         # Initialize a set to keep track of visited locations
@@ -428,8 +467,9 @@ class Ship():
                     break
 
         while self.bot != self.leak:
-            # Sense only if it's been a while since the last sense or move
-            if self.sense_action():
+            x = 0
+            if self.sense_action() and x == 1:
+                print("sensed action")
                 for x in range(self.bot[0] - k, self.bot[0] + k + 1):
                     for y in range(self.bot[1] - k, self.bot[1] + k + 1):
                         if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
@@ -446,9 +486,9 @@ class Ship():
                                 print(f"Total amount of actions = {ship.actions_counter}")  
                                 return
             # Calculate the direction towards the leak
+            
             else:
                 detection_square = self.get_detection_square()
-                constraints = visited | {(x, y) for x in range(self.D) for y in range(self.D) if self.ship[x][y] == 'X'}
                 shortest_path = None
                 for location in detection_square:
                     path = self.find_shortest_path(start =location, end = self.leak)
@@ -456,21 +496,36 @@ class Ship():
                         shortest_path = path
 
                 # Move to the next location on the shortest path
-                new_location = shortest_path[0]
-                print(f"Moving to location ({new_location[0]}, {new_location[1]})")
-                print(self)
-                visited.add(self.bot)
-                self.ship[self.bot[0]][self.bot[1]] = 'O'
-                self.bot = new_location
-                self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
-                self.actions_counter += 1
+                while shortest_path and len(shortest_path) > 0:
+                    # Move to the next location on the shortest path
+                    new_location = shortest_path.pop(0)
+                    print(f"Moving to location ({new_location[0]}, {new_location[1]})")
+                    print(self)
+                    visited.add(self.bot)
+                    self.ship[self.bot[0]][self.bot[1]] = 'O'
+                    self.bot = new_location
+                    self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    self.actions_counter += 1
+                x = 1
+
                 if (self.bot == self.leak):
                     print("Congratulations, you found the leak!")
                     print(f"Total amount of actions = {ship.actions_counter}")  
                     return
-               
-            
-            
+     
+    def run_bot_2_simulation(self, num_simulations):
+        results = []
+        for k in range(1, 15):
+            total_actions = 0
+            for _ in range(num_simulations):
+                ship.reset()
+                self.k_val = k
+                self.run_bot_2(k)
+                total_actions += self.actions_counter
+            average_actions = total_actions / num_simulations
+            results.append((k, average_actions))
+        return results
+                       
         #sense_action (for probabilistic determination)
         #compute the probability of receiving a beep
             #based on that probability, re-initilize the probability matrix to take the new beep/no-beep probability
@@ -673,13 +728,13 @@ class Ship():
                                 print("Congratulations, you found the original leak!")
                                 print(f"Total amount of actions so far = {ship.actions_counter}") 
                                 leaks_found += 1
-                                self.leak = None
+                                self.leak = (-1,-1)
                                 
                             if self.bot == self.second_leak:
                                 print("Congratulations, you found the second leak!")
                                 print(f"Total amount of actions so far = {ship.actions_counter}")
                                 leaks_found += 1
-                                self.second_leak = None
+                                self.second_leak = (-1,-1)
             if leaks_found == 2:
                 print("Both leaks found!")
                 print(f"Total amount of actions = {ship.actions_counter}")
@@ -699,6 +754,19 @@ class Ship():
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                     queue.append(new_location)
                     self.actions_counter += 1
+                    
+    def run_bot_5_simulation(self, num_simulations):
+        results = []
+        for k in range(1, 15):
+            total_actions = 0
+            for _ in range(num_simulations):
+                ship.reset()
+                self.k_val = k
+                self.run_bot_1(k)
+                total_actions += self.actions_counter
+            average_actions = total_actions / num_simulations
+            results.append((k, average_actions))
+        return results
 
     
     def run_bot_6(self, k):
@@ -786,9 +854,9 @@ class Ship():
 
                         leaks_found += 1
                         if other_target_leak == self.leak:
-                            self.leak = None
+                            self.leak = (-1,-1)
                         else:
-                            self.second_leak = None
+                            self.second_leak = (-1,-1)
                 continue 
                               
             if self.sense_action_for_two():
@@ -808,13 +876,13 @@ class Ship():
                                 print("Congratulations, you found the original leak!")
                                 print(f"Total amount of actions so far = {ship.actions_counter}") 
                                 leaks_found += 1
-                                self.leak = None
+                                self.leak = (-1,-1)
                                 
                             if self.bot == self.second_leak:
                                 print("Congratulations, you found the second leak!")
                                 print(f"Total amount of actions so far = {ship.actions_counter}")
                                 leaks_found += 1
-                                self.second_leak = None
+                                self.second_leak = (-1,-1)
             if leaks_found == 2:
                 print("Both leaks found!")
                 print(f"Total amount of actions = {ship.actions_counter}")
@@ -833,6 +901,19 @@ class Ship():
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
                     queue.append(new_location)
                     self.actions_counter += 1
+                    
+    def run_bot_6_simulation(self, num_simulations):
+        results = []
+        for k in range(1, 15):
+            total_actions = 0
+            for _ in range(num_simulations):
+                ship.reset()
+                self.k_val = k
+                self.run_bot_1(k)
+                total_actions += self.actions_counter
+            average_actions = total_actions / num_simulations
+            results.append((k, average_actions))
+        return results 
             
 
     def run_bot_7(self, a_val: float):
@@ -1115,7 +1196,71 @@ if __name__ == "__main__":
             break  # Exit the loop if the user chooses to exit
         else:
             print("Invalid bot choice.")
+            
+        run_another = input("Do you want to run another bot or run a simulation? (bot(b)/simulation(s)/no(n)): ").lower()
 
+        if run_another == 'n':
+            break  # Exit the loop if the user doesn't want to run another bot or simulation
+        elif run_another == 's':
+            num_simulations = 50
+            simulation_type = int(input("Which simulation do you want to run?\n1. Bot 1 Simulation\n2. Bot 2 Simulation\n3. Bot 3 Simulation\n4. Bot 4 Simulation\n5. Bot 5 Simulation\n6. Bot 6 Simulation\n7. Bot 7 Simulation\n8. Bot 8 Simulation\n9. Bot 9 Simulation\n"))
+            if simulation_type == 1:
+                simulation_results = ship.run_bot_1_simulation(num_simulations)
+                k_values, average_actions = zip(*simulation_results)
+
+                plt.plot(k_values, average_actions, marker='o')
+                plt.title('Bot 1 Simulation Results')
+                plt.xlabel('k Value')
+                plt.ylabel('Average Actions')
+                plt.grid(True)
+                plt.show()
+            elif simulation_type == 2:
+                simulation_results = ship.run_bot_2_simulation(num_simulations)
+                k_values, average_actions = zip(*simulation_results)
+
+                plt.plot(k_values, average_actions, marker='o')
+                plt.title('Bot 2 Simulation Results')
+                plt.xlabel('k Value')
+                plt.ylabel('Average Actions')
+                plt.grid(True)
+                plt.show()
+            elif simulation_type == 3:
+                #simulation_results = ship.run_bot_3_simulation(num_simulations, alpha_value) 
+                pass
+            elif simulation_type == 4:
+                #simulation_results = ship.run_bot_4_simulation(num_simulations, alpha_value)  
+                pass
+            elif simulation_type == 5:
+                simulation_results = ship.run_bot_5_simulation(num_simulations)
+                k_values, average_actions = zip(*simulation_results)
+
+                plt.plot(k_values, average_actions, marker='o')
+                plt.title('Bot 5 Simulation Results')
+                plt.xlabel('k Value')
+                plt.ylabel('Average Actions')
+                plt.grid(True)
+                plt.show()            
+            elif simulation_type == 6:
+                simulation_results = ship.run_bot_6_simulation(num_simulations)
+                k_values, average_actions = zip(*simulation_results)
+
+                plt.plot(k_values, average_actions, marker='o')
+                plt.title('Bot 6 Simulation Results')
+                plt.xlabel('k Value')
+                plt.ylabel('Average Actions')
+                plt.grid(True)
+                plt.show()     
+                
+            elif simulation_type == 7:
+                #simulation_results = ship.run_bot_7_simulation(num_simulations, alpha_value)
+                pass  
+            elif simulation_type == 8:
+                #simulation_results = ship.run_bot_8_simulation(num_simulations, alpha_value)
+                pass 
+            elif simulation_type == 9:
+                #simulation_results = ship.run_bot_9_simulation(num_simulations)  
+                pass
+            
         # Ask the user if they want to run another bot
         run_another = input("Do you want to run another bot? (yes(y)/no(n)): ").lower()
         if run_another == 'n':
