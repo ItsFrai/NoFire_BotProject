@@ -1237,7 +1237,7 @@ class Ship():
             prob_mat = self.create_prob_mat(leak_prob)
 
 
-            if switch  == 0
+            if switch  == 0:
                 # first gets the max value
                 max_val = prob_mat[0][0]
                 new_x = new_y = 0
