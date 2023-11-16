@@ -1158,7 +1158,129 @@ class Ship():
         return total_actions
     
     def run_bot_9(self, a_val):
-        pass
+
+        while self.leak == (-1, -1) or self.second_leak == (-1,-1):
+            leak_x = random.randint(0, self.D - 1)
+            leak_y = random.randint(0, self.D - 1)
+            if self.count_neighbors(leak_x, leak_y, "O") > 0 and self.ship[leak_x][leak_y] != "X":
+
+                if self.leak == (-1,-1):
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.leak = (leak_x, leak_y)
+                    print(f"Leak generated at location {self.leak}")
+                elif self.second_leak != self.leak: # new value for second leak
+                    self.ship[leak_x][leak_y] = self.colored_block('g')
+                    self.second_leak = (leak_x, leak_y)
+                    print(f"Second Leak generated at location {self.second_leak}")
+        
+        
+        #initilizing the main prob list for all of the possible leak combinations
+        leak_prob = {}
+        for x in range(self.D):
+            for y in range(self.D):
+                for a in range(x, self.D):
+                    for b in range(y, self.D):
+                        if (x,y) in self.open_cells_list and (a,b) in self.open_cells_list and (x,y) != (a,b):
+                            leak_prob[((x,y), (a,b))] = 0.0
+        print(len(leak_prob))
+        
+        #initilizing the probability matrix for the 2-Dimensional array
+        prob_mat = []
+        
+        total_actions = 0
+        switch = 0
+
+
+        for key, value in leak_prob.items():
+            leak_prob[key] = 1 / len(leak_prob)
+        
+        bot_x, bot_y = self.bot
+                    
+        while self.found_1 == 0 or self.found_2 == 0:
+            if (self.bot == self.leak):
+                self.found_1 = 1
+                print("you found the first leak")
+                
+            if (self.bot == self.second_leak):
+                self.found_2 = 1
+                print("you found the second leak")
+                
+            if self.found_1 == 1 and self.found_2 == 1:
+                break
+                
+            bot_x, bot_y = self.bot
+            for a in range(self.D):
+                for b in range(self.D):
+                    if (a,b) in self.open_cells_list:
+                        leak_prob[((bot_x, bot_y), (a,b))] = 0.0
+                        
+            leak_prob = self.update_mat_enter_mult(leak_prob) 
+            
+            #sense action
+            beep = 0
+            dist_leak_1 = len(self.find_shortest_path((self.bot), (self.leak))) - 1
+            dist_leak_2 = len(self.find_shortest_path(self.bot, self.second_leak)) - 1
+            prob_beep_1 = math.exp( -a_val * (dist_leak_1 - 1))
+            prob_beep_2 = math.exp( -a_val * (dist_leak_2 - 1))
+            prob_beep = prob_beep_1 + prob_beep_2 - (prob_beep_1 * prob_beep_2)
+            rand = random.random()
+            if rand <= prob_beep:
+                beep = 1
+            total_actions += 1
+                        
+            #update probabilities based on the occurence of the beep
+            if beep == 1:
+                leak_prob = self.update_mat_beep_mult(leak_prob, a_val)
+            else:
+                leak_prob = self.update_mat_no_beep_mult(leak_prob, a_val)
+                
+            prob_mat = self.create_prob_mat(leak_prob)
+
+
+            if switch  == 0
+                # first gets the max value
+                max_val = prob_mat[0][0]
+                new_x = new_y = 0
+                for i in range(self.D):
+                    for j in range(self.D):
+                        if prob_mat[i][j] > max_val:
+                            max_val = prob_mat[i][j]
+                            new_x, new_y = i, j
+            
+                # checks for duplicates of that max
+                max_prob_ties = [] # list for cells with multiple max probabilites 
+                
+                for i in range(self.D):
+                    for j in range(self.D):
+                        if prob_mat[i][j] == max_val:
+                            max_prob_ties.append((i,j))
+                
+                # get the min coord
+                min_coord = min(max_prob_ties, key=lambda tie: len(self.find_shortest_path((bot_x, bot_y), (tie[0], tie[1]))) - 1)
+
+                total_actions += (len(self.find_shortest_path((bot_x, bot_y), (min_coord[0], min_coord[1]))) - 1)
+                self.ship[bot_x][bot_y] = "O"
+                self.ship[min_coord[0]][min_coord[1]] = self.colored_block('c')
+                print(f"RELOCATING TO {(new_x, new_y)}")
+                print(f"BEGAN AT: {(bot_x, bot_y)}")
+                print(self)
+                self.bot = (new_x, new_y)
+                switch = 1
+            else:
+                max_tuple_x, max_tuple_y = bot_x, bot_y
+                for x, y in self.directions:
+                    new_x, new_y = x + bot_x, y + bot_y
+                    if self.ship[new_x][new_y] != "X" and prob_mat[new_x][new_y] > prob_mat[max_tuple_x][max_tuple_y]:
+                        max_tuple_x = new_x
+                        max_tuple_y = new_y
+
+                total_actions += 1
+                self.bot = (max_tuple_x, max_tuple_y)
+                switch = 0
+                    
+            
+        print(f"Congratulations! You found the leaks in {total_actions} actions!")
+        return total_actions
 
 if __name__ == "__main__":
     ship = Ship()
