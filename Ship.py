@@ -40,7 +40,7 @@ class Ship():
                 rand_x_coord = random.randint(0, self.D - 1)
                 rand_y_coord = random.randint(0, self.D - 1)
                 if self.ship[rand_x_coord][rand_y_coord] != "X": #can't be inside a wall
-                    if self.count_neighbors(rand_x_coord, rand_x_coord, "O") != 0: # can't be blocked in
+                    if self.count_neighbors(rand_x_coord, rand_y_coord, "O") != 0: # can't be blocked in
                         self.ship[rand_x_coord][rand_y_coord] = self.colored_block('c')
                         self.init_bot_location = self.bot = (rand_x_coord, rand_y_coord)
                           
@@ -54,7 +54,7 @@ class Ship():
         while self.leak == (-1, -1):
             leak_x = random.randint(0, self.D - 1)
             leak_y = random.randint(0, self.D - 1)
-            if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
+            if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1 and self.ship[leak_x][leak_y] != "X"):
                 self.ship[leak_x][leak_y] = self.colored_block('g')
                 self.leak = (leak_x, leak_y)
                 break
@@ -381,8 +381,7 @@ class Ship():
 
     def run_bot_1(self, k):
         # Initialize a queue for BFS
-        queue = deque([self.bot])  # Each queue element is a tuple (location, distance)
-
+        queue = deque([self.bot])  
         # Initialize a set to keep track of visited locations
         visited = set()
         
@@ -453,9 +452,15 @@ class Ship():
         return results
             
     def run_bot_2(self, k):
+        
+        queue = deque([self.bot])  
+
         # Initialize a set to keep track of visited locations
         visited = set()
-        
+
+        # Initialize a set to keep track of sensed locations
+        sensed_locations = set()
+
         if self.leak == (-1, -1):
             while True:
                 leak_x = random.randint(0, self.D - 1)
@@ -463,55 +468,59 @@ class Ship():
                 if (abs(leak_x - self.bot[0]) > k + 1 or abs(leak_y - self.bot[1]) > k + 1):
                     self.ship[leak_x][leak_y] = self.colored_block('g')
                     self.leak = (leak_x, leak_y)
-                    print(f"Leak generated at location {self.leak}")
                     break
 
-        while self.bot != self.leak:
-            x = 0
-            if self.sense_action() and x == 1:
-                print("sensed action")
-                for x in range(self.bot[0] - k, self.bot[0] + k + 1):
-                    for y in range(self.bot[1] - k, self.bot[1] + k + 1):
-                        if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
-                            print(f"Moving to location ({x}, {y})")
-                            print(self)
-                            visited.add((x, y))
-                            self.ship[self.bot[0]][self.bot[1]] = 'O'
-                            self.bot = (x, y)
-                            self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')  
-                            self.actions_counter += 1
-                        
-                            if self.bot == self.leak:
-                                print("Congratulations, you found the leak!")
-                                print(f"Total amount of actions = {ship.actions_counter}")  
-                                return
-            # Calculate the direction towards the leak
-            
-            else:
-                detection_square = self.get_detection_square()
-                shortest_path = None
-                for location in detection_square:
-                    path = self.find_shortest_path(start =location, end = self.leak)
-                    if path and (shortest_path is None or len(path) < len(shortest_path)):
-                        shortest_path = path
+        while queue:
+            current_location = queue.popleft()
 
-                # Move to the next location on the shortest path
-                while shortest_path and len(shortest_path) > 0:
-                    # Move to the next location on the shortest path
-                    new_location = shortest_path.pop(0)
+            # Check if the current location is the leak
+            if current_location == self.leak:
+                return
+            
+            
+            detection_square = self.get_detection_square()
+            unsensed_count = sum(1 for location in detection_square if location not in sensed_locations) 
+
+            # Only sense if more than half of the cells are not sensed
+            if (unsensed_count > len(detection_square) // 2):
+                sensed_action_result = self.sense_action()
+                for location in detection_square:
+                    if location not in visited:
+                        if not sensed_action_result:
+                            sensed_locations.add(location)
+                if self.sense_action():
+                    print("Leak found")
+                    for x in range(self.bot[0] - k, self.bot[0] + k + 1):
+                        for y in range(self.bot[1] - k, self.bot[1] + k + 1):
+                            if (x, y) not in visited and 0 <= x < self.D and 0 <= y < self.D and self.ship[x][y] != 'X':
+                                print(f"Moving to location ({x}, {y})")
+                                print(self)
+                                visited.add((x, y))
+                                self.ship[self.bot[0]][self.bot[1]] = 'O'
+                                self.bot = (x, y)
+                                self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                                self.actions_counter += 1  
+                            
+                                if self.bot == self.leak:
+                                   print("Congratulations, you found the leak!")
+                                   print(f"Total amount of actions = {ship.actions_counter}")  
+                                   return
+
+            # Explore neighboring cells
+            for dx, dy in self.directions:
+                new_location = (current_location[0] + dx, current_location[1] + dy)
+
+                # Check if the new location is valid and not visited
+                if 0 <= new_location[0] < self.D and 0 <= new_location[1] < self.D and self.ship[new_location[0]][new_location[1]] != 'X' and new_location not in visited:
                     print(f"Moving to location ({new_location[0]}, {new_location[1]})")
                     print(self)
-                    visited.add(self.bot)
+                    visited.add(new_location)
                     self.ship[self.bot[0]][self.bot[1]] = 'O'
                     self.bot = new_location
                     self.ship[self.bot[0]][self.bot[1]] = self.colored_block('c')
+                    queue.append(new_location)
                     self.actions_counter += 1
-                x = 1
 
-                if (self.bot == self.leak):
-                    print("Congratulations, you found the leak!")
-                    print(f"Total amount of actions = {ship.actions_counter}")  
-                    return
      
     def run_bot_2_simulation(self, num_simulations):
         results = []
@@ -914,7 +923,7 @@ class Ship():
             average_actions = total_actions / num_simulations
             results.append((k, average_actions))
         return results 
-            
+
 
     def run_bot_7(self, a_val: float):
         # sets the leaks if it hasn't been set previously
@@ -1202,7 +1211,7 @@ if __name__ == "__main__":
         if run_another == 'n':
             break  # Exit the loop if the user doesn't want to run another bot or simulation
         elif run_another == 's':
-            num_simulations = 50
+            num_simulations = 500
             simulation_type = int(input("Which simulation do you want to run?\n1. Bot 1 Simulation\n2. Bot 2 Simulation\n3. Bot 3 Simulation\n4. Bot 4 Simulation\n5. Bot 5 Simulation\n6. Bot 6 Simulation\n7. Bot 7 Simulation\n8. Bot 8 Simulation\n9. Bot 9 Simulation\n"))
             if simulation_type == 1:
                 simulation_results = ship.run_bot_1_simulation(num_simulations)
